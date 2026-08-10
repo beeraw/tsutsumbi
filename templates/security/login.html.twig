@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'security.login.title'|trans }} · {{ 'app.name'|trans }}{% endblock %}
+
+{# The only public screen, and the only one with no rail, no top bar and no
+   breadcrumb: there is nowhere else to go from here. #}
+{% block shell %}
+    <div class="login">
+        <div class="login-inner">
+            <p class="login-brand">
+                <img src="{{ asset('favicon.svg') }}" alt="" width="26" height="26">
+                {{ 'app.name'|trans }}
+            </p>
+
+            {% if error %}
+                <p class="login-alert" role="alert">
+                    {{ error.messageKey|trans(error.messageData, 'security') }}
+                </p>
+            {% endif %}
+
+            <form class="login-card" method="post" action="{{ path('app_login') }}">
+                <div class="field">
+                    <label for="email">{{ 'security.login.email'|trans }}</label>
+                    <input type="email" id="email" name="email" value="{{ lastEmail }}"
+                           autocomplete="username" required autofocus>
+                </div>
+
+                <div class="field">
+                    <label for="password">{{ 'security.login.password'|trans }}</label>
+                    <input type="password" id="password" name="password"
+                           autocomplete="current-password" required>
+                </div>
+
+                <label class="toggle">
+                    <input type="checkbox" name="_remember_me" value="on">
+                    {{ 'security.login.remember_me'|trans }}
+                </label>
+
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <div class="actions">
+                    <button type="submit" class="button button-block">{{ 'security.login.submit'|trans }}</button>
+                </div>
+            </form>
+
+            <p class="login-note">{{ 'security.login.note'|trans }}</p>
+        </div>
+    </div>
+{% endblock %}

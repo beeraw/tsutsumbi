@@ -1,0 +1,10 @@
+# Session-backed CSRF protection, not the stateless double-submit variant.
+#
+# Stateless CSRF exists for responses that must be cacheable, and it pays for
+# that with an inline script that rewrites a placeholder from a cookie. The human
+# side of tsutsumbi is on a session already, so it buys nothing here — and the
+# inline script would force 'unsafe-inline' into a Content-Security-Policy whose
+# whole point is not to have it.
+framework:
+    form:
+        csrf_protection: true

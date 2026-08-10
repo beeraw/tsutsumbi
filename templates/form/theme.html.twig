@@ -1,0 +1,62 @@
+{#
+  A thin theme over the default div layout: the point is to give every row a
+  class the stylesheet can reach, so form markup is styled the same way as the
+  hand-written markup around it rather than by accident.
+#}
+{% extends 'form_div_layout.html.twig' %}
+
+{% block form_row %}
+    <div class="field{{ errors|length ? ' field-invalid' : '' }}">
+        {{ form_label(form) }}
+        {{ form_widget(form) }}
+        {{ form_help(form) }}
+        {{ form_errors(form) }}
+    </div>
+{% endblock %}
+
+{% block form_help %}
+    {% if help is not empty %}
+        <p id="{{ id }}_help" class="help">
+            {{- help_html ? help|trans(help_translation_parameters, translation_domain)|raw
+                : help|trans(help_translation_parameters, translation_domain) -}}
+        </p>
+    {% endif %}
+{% endblock %}
+
+{% block form_errors %}
+    {% if errors|length > 0 %}
+        <ul class="form-error-messages">
+            {% for error in errors %}
+                <li>{{ error.message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{#
+  A collapsed choice is the one control the stylesheet replaces rather than
+  paints: on a machine with a mouse the script builds a menu inside this wrapper
+  and hides the <select>, which stays the field that is submitted. Wrapping it
+  here rather than at each call site means no form can forget it — and with
+  scripting off, or under a finger, the wrapper is an empty div around a native
+  menu.
+#}
+{% block choice_widget_collapsed %}
+    <div class="select">{{ parent() }}</div>
+{% endblock %}
+
+{#
+  Expanded choices render one checkbox per row. The children go through
+  form_widget and form_label rather than form_row, so they do not each pick up
+  the field wrapper meant for a whole row.
+#}
+{% block choice_widget_expanded %}
+    <div class="choice-list" {{ block('widget_container_attributes') }}>
+        {% for child in form %}
+            <div class="choice-row">
+                {{ form_widget(child) }}
+                {{ form_label(child, null, {translation_domain: choice_translation_domain}) }}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ ticket.key }} · {{ ticket.title }}{% endblock %}
+
+{% block crumbs %}
+    <a href="{{ path('app_dashboard') }}">{{ 'dashboard.title'|trans }}</a>
+    <span class="crumbs-sep">/</span>
+    <a href="{{ path('app_project_show', {key: ticket.project.key}) }}">{{ ticket.project.name }}</a>
+    <span class="crumbs-sep">/</span>
+    <span class="crumbs-current">{{ ticket.key }}</span>
+{% endblock %}
+
+{% block body %}
+    <div class="ticket-head">
+        {# The key exists to be pasted somewhere else — a commit message, a
+           chat, the next agent's prompt — so here it is a control rather than a
+           label. The upgrade happens in the script: where there is no clipboard
+           to write to, the key stays the plain text it has always been instead
+           of a button that goes dead under the finger. #}
+        <span class="ticket-key" data-copy="{{ ticket.key }}"
+              data-copy-label="{{ 'ticket.action.copy_key'|trans({'%key%': ticket.key}) }}"
+              data-copy-done="{{ 'ticket.key.copied'|trans }}">{{ ticket.key }}</span>
+        <h1>{{ ticket.title }}</h1>
+        {% include '_partials/status.html.twig' %}
+    </div>
+
+    <div class="ticket-detail">
+        <div class="ticket-main">
+            <div class="ticket-description prose">
+                {% if ticket.description %}
+                    {{ ticket.description|markdown }}
+                {% else %}
+                    <p class="help">{{ 'ticket.no_description'|trans }}</p>
+                {% endif %}
+            </div>
+
+            <div class="section-head">
+                <h2>{{ 'ticket.section.timeline'|trans }}</h2>
+                <span>{{ 'ticket.timeline.count'|trans({'%count%': timeline|length}) }}</span>
+            </div>
+
+            {% if timeline is empty %}
+                <p class="empty-note">{{ 'ticket.timeline.empty'|trans }}</p>
+            {% else %}
+                {# One chronology, two natures of entry, and deliberately not the
+                   same weight: a comment is a body of text and gets a surface to
+                   sit on, a status change is one line and gets no container at
+                   all. A box around six words would make the audit trail look
+                   busier than the discussion it interrupts. #}
+                <ul class="timeline">
+                    {% for entry in timeline %}
+                        {% if entry.comment %}
+                            <li class="timeline-comment">
+                                <p class="timeline-head">
+                                    {% with {actor: entry.actor} %}{% include '_partials/actor.html.twig' %}{% endwith %}
+                                    <time datetime="{{ entry.at|date('c') }}">
+                                        {{ entry.at|format_datetime('medium', 'short') }}
+                                    </time>
+                                </p>
+                                <div class="timeline-body prose">{{ entry.comment.body|markdown }}</div>
+                            </li>
+                        {% else %}
+                            <li class="timeline-change">
+                                <ul class="timeline-changes">
+                                    {% for event in entry.events %}
+                                        <li>
+                                            <strong>{{ event_field_key(event)|trans }}</strong>
+                                            {% if event_is_prose(event) %}
+                                                {# The journal keeps both versions in full; printing them
+                                                   here would bury everything else. #}
+                                                {{ 'ticket.timeline.rewritten'|trans }}
+                                            {% else %}
+                                                {% set from = event_value_key(event, event.oldValue) %}
+                                                {% set to = event_value_key(event, event.newValue) %}
+                                                <span class="from">{{ from ? from|trans : 'ticket.timeline.empty_value'|trans }}</span>
+                                                →
+                                                <span class="to">{{ to ? to|trans : 'ticket.timeline.empty_value'|trans }}</span>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <time datetime="{{ entry.at|date('c') }}">
+                                    {{ entry.actor.displayName }} ·
+                                    {{ entry.at|format_datetime('medium', 'short') }}
+                                </time>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="ticket-comment-form">
+                <div class="section-head">
+                    <h2>{{ 'comment.section.add'|trans }}</h2>
+                </div>
+                {{ form_start(commentForm) }}
+                {{ form_row(commentForm.body) }}
+                <div class="actions">
+                    <button type="submit" class="button">{{ 'comment.action.add'|trans }}</button>
+                    <span class="help">{{ 'comment.form.body.help'|trans }}</span>
+                </div>
+                {{ form_end(commentForm) }}
+            </div>
+        </div>
+
+        <aside class="ticket-aside">
+            <dl class="meta-list">
+                <dt>{{ 'ticket.column.type'|trans }}</dt>
+                <dd>{{ ticket.type.translationKey|trans }}</dd>
+
+                <dt>{{ 'ticket.column.priority'|trans }}</dt>
+                <dd>{{ ticket.priority.translationKey|trans }}</dd>
+
+                <dt>{{ 'ticket.column.created_by'|trans }}</dt>
+                <dd>{% with {actor: ticket.createdBy} %}{% include '_partials/actor.html.twig' %}{% endwith %}</dd>
+
+                <dt>{{ 'ticket.column.created_at'|trans }}</dt>
+                <dd>{{ ticket.createdAt|format_datetime('medium', 'short') }}</dd>
+
+                {% if ticket.startedAt %}
+                    <dt>{{ 'ticket.column.started_at'|trans }}</dt>
+                    <dd>{{ ticket.startedAt|format_datetime('medium', 'short') }}</dd>
+                {% endif %}
+
+                {% if ticket.closedAt %}
+                    <dt>{{ 'ticket.column.closed_at'|trans }}</dt>
+                    <dd>{{ ticket.closedAt|format_datetime('medium', 'short') }}</dd>
+                {% endif %}
+            </dl>
+
+            {# The status change is the one action taken from this screen often
+               enough to stay open. Reopening is not a separate control: it is a
+               status that leaves "done", and the resolution disappears by
+               itself when it does. #}
+            <div>
+                <div class="section-head">
+                    <h2>{{ (ticket.closed ? 'ticket.action.reopen_or_change' : 'ticket.action.change_status')|trans }}</h2>
+                </div>
+                {{ form_start(statusForm) }}
+                {{ form_errors(statusForm) }}
+                {{ form_row(statusForm.status) }}
+                <div data-resolution-field>{{ form_row(statusForm.resolution) }}</div>
+                {{ form_row(statusForm.note) }}
+                <div class="actions">
+                    <button type="submit" class="button button-quiet">{{ 'ticket.action.apply'|trans }}</button>
+                </div>
+                {{ form_end(statusForm) }}
+            </div>
+
+            <details class="panel" {{ panel == 'edit' ? 'open' : '' }}>
+                <summary>{{ 'ticket.action.edit'|trans }}</summary>
+                {{ form_start(editForm) }}
+                {{ form_errors(editForm) }}
+                {{ form_row(editForm.title) }}
+                {{ form_row(editForm.description) }}
+                {{ form_row(editForm.type) }}
+                {{ form_row(editForm.priority) }}
+                <div class="actions">
+                    <button type="submit" class="button button-quiet">{{ 'ticket.action.save'|trans }}</button>
+                </div>
+                {{ form_end(editForm) }}
+            </details>
+
+            <div>
+                <div class="section-head">
+                    <h2>{{ 'attachment.section.title'|trans }}</h2>
+                </div>
+                {% if ticket.attachments|length %}
+                    <ul class="attachments">
+                        {% for attachment in ticket.attachments %}
+                            <li>
+                                <a href="{{ path('app_attachment_download', {id: attachment.id}) }}">
+                                    {{ attachment.originalFilename }}
+                                </a>
+                                <span class="help">
+                                    {{ attachment.mimeType }} · {{ (attachment.size / 1024)|round }} Ko ·
+                                    {{ attachment.createdAt|format_datetime('medium', 'short') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty-note">{{ 'attachment.empty'|trans }}</p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+{% endblock %}

@@ -1,0 +1,2619 @@
+/*
+ * tsutsumbi — an instrument, not a page.
+ *
+ * The interface is read several times a day and mostly scanned, so density is
+ * the point — but density is not the same thing as small. The navy is the
+ * chrome, the orange is the mark and the focus ring, and four muted hues carry
+ * the ticket statuses. Nothing else is saturated, which is why the eye lands on
+ * the one thing that is.
+ *
+ * Four decisions carry the rest of the file:
+ *
+ *   1. The type scale sits one notch above where it started. The base is 15px
+ *      and
+ *      nothing is allowed below 12 — the scale used to bottom out at 10.5,
+ *      which is where column heads, paths and dates were living. The row is
+ *      38px, so a 1080p screen shows twenty-six of them rather than thirty.
+ *      That is the price, paid knowingly.
+ *   2. The fixed grid columns are sized for that scale. They are declared in
+ *      rem and the text inside them is not, so a scale that moved without them
+ *      would show up as a truncation bug.
+ *   3. A <select> on a mouse-driven machine becomes a dropdown that can carry
+ *      the coloured status chip — the one thing a native menu cannot render.
+ *      Under a finger it stays native. See the dropdown section.
+ *   4. The sheet is written mobile first: every media query is a min-width, the
+ *      unqualified rules are the phone, and each breakpoint adds what a wider
+ *      screen affords. Three of them, each about a different thing:
+ *
+ *        43.75rem / 700px  — navigation: drawer and tab bar become a rail
+ *        75rem    / 1200px — the aside: the rail unfolds, the ticket gets its
+ *                            column of metadata
+ *        87.5rem  / 1400px — results: the filter sheet becomes a right column
+ *
+ *      The lists are not on that list. Whether a row can hold six columns is a
+ *      question about the list's own box — the same 1440px screen gives it
+ *      1088px with the filters in a sheet and 766px with them in a column — so
+ *      they are container queries, at 43rem and 57rem of the grid itself.
+ *
+ *      And one query that is not about width at all: `pointer: fine` decides
+ *      the size of anything that gets clicked or tapped, and whether the
+ *      dropdown replaces the native menu.
+ *
+ * Sections, in order: fonts, tokens, reset, shell, rail, tabbar, topbar,
+ * flashes, page head, grids, badges, actors, results, forms, dropdown, ticket,
+ * timeline, prose, tokens screen, login, then the three breakpoints.
+ */
+
+/* ------------------------------------------------------------------- fonts */
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('/fonts/nunito-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+        U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('/fonts/nunito-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+        U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+        U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Identifiers — ticket keys, project paths, agent slugs, scopes, tokens — are
+   strings a human compares character by character. A monospace face makes that
+   comparison possible; the proportional one does not. */
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 400 600;
+    font-display: swap;
+    src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+        U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 400 600;
+    font-display: swap;
+    src: url('/fonts/jetbrains-mono-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+        U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+        U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ------------------------------------------------------------------ tokens */
+
+/*
+ * Every colour is declared once, as a light/dark pair. `color-scheme` decides
+ * which half applies, so the theme switch is one property on the root rather
+ * than a second copy of the palette — and native controls, scrollbars and form
+ * widgets follow the theme for free. Without an explicit choice the root keeps
+ * `light dark` and the system preference wins.
+ */
+:root {
+    color-scheme: light dark;
+
+    --canvas: light-dark(#f5f6f8, #0d131f);
+    --surface: light-dark(#ffffff, #141c2b);
+    --sunken: light-dark(#fafbfc, #111827);
+    --raised: light-dark(#ffffff, #1a2436);
+    --line: light-dark(#e2e6ec, #25314a);
+    --line-strong: light-dark(#cdd4de, #33415e);
+
+    --ink: light-dark(#16202f, #e7ecf5);
+    --ink-soft: light-dark(#4a5666, #a6b2c6);
+    --ink-faint: light-dark(#7a8494, #77869e);
+
+    --rail: light-dark(#1b2a4a, #0a1120);
+    --rail-raised: light-dark(#24365c, #1b2a4a);
+    --rail-ink: #e7ecf5;
+    --rail-faint: light-dark(#93a1bd, #8394b3);
+
+    --button-fill: light-dark(#1b2a4a, #2e4477);
+    --button-fill-hover: light-dark(#24365c, #3a548f);
+
+    --accent: light-dark(#de8a2a, #e79b46);
+    --on-accent: #1b2a4a;
+
+    --status-todo: light-dark(#6b7684, #8b95a5);
+    --status-in_progress: light-dark(#1f6f8b, #4fa8c7);
+    --status-blocked: light-dark(#a33a3a, #d97070);
+    --status-done: light-dark(#4a7a52, #78ad82);
+
+    --tint-todo: light-dark(#f0f1f3, #1c2434);
+    --tint-in_progress: light-dark(#e6f1f5, #152a35);
+    --tint-blocked: light-dark(#f8eaea, #301c1e);
+    --tint-done: light-dark(#eaf2ea, #16291c);
+
+    /*
+     * Type. The base is 15px. The old 13.5 was a bet on density that the eye
+     * lost: at a metre from a large monitor a 10.5px column head is a shape
+     * rather than a word, and a 12.5px date is read by guessing. Every step
+     * moves up one notch and the floor becomes 12px — the smallest size in the
+     * interface, and it is only ever used uppercased and letter-spaced, which
+     * is the one treatment that survives being small.
+     *
+     * The ratio between steps is small on purpose: this is an instrument with
+     * one heading per screen, so the scale's job is to separate four ranks of
+     * secondary text, not to build a magazine hierarchy.
+     */
+    --text-micro: 0.75rem;      /* 12px   — uppercase column heads, eyebrows */
+    --text-tiny: 0.78125rem;    /* 12.5px — scopes, paths, dense metadata */
+    --text-small: 0.8125rem;    /* 13px   — captions, help text */
+    --text-meta: 0.84375rem;    /* 13.5px — dates, secondary cells */
+    --text-ui: 0.875rem;        /* 14px   — controls, buttons, list rows */
+    --text-body: 0.9375rem;     /* 15px   — the base */
+    --text-lead: 1rem;          /* 16px   — description prose, card titles */
+    --text-title: 1.375rem;     /* 22px   — the one heading per screen */
+
+    /* Space. Seven steps, and nothing between them. Unchanged: the type grew,
+       the air around it did not, which is how the screen keeps its density. */
+    --space-1: 0.25rem;
+    --space-2: 0.375rem;
+    --space-3: 0.5rem;
+    --space-4: 0.625rem;
+    --space-5: 0.875rem;
+    --space-6: 1.25rem;
+    --space-7: 1.5rem;
+
+    /* Fixed measures. The row height is the density decision made numeric: 38px
+       holds a 14px line, a 16px chip and 12px of air, and no less. */
+    --row-h: 2.375rem;      /* 38px */
+    --head-h: 2.125rem;     /* 34px */
+    --topbar-h: 3rem;       /* 48px */
+    --touch-h: 2.75rem;     /* 44px */
+    --rail-w: 13.75rem;     /* 220px — 15px labels need the extra 12 */
+    --rail-w-narrow: 3.25rem;
+    --gutter-w: 3px;        /* the alert stripe down the left of a row */
+
+    /*
+     * Anything that gets pressed is sized by the pointer, not by the viewport.
+     * A tablet at 1024px is a finger, and a 30px target is a 30px target
+     * whatever the screen is wide — this is the honest criterion, and it is the
+     * same one that decides between the dropdown and the native menu below.
+     */
+    --control-h: var(--touch-h);
+
+    --radius: 0.2rem;
+    --shadow: 0 1px 2px light-dark(rgb(16 25 46 / 6%), rgb(0 0 0 / 30%));
+    --shadow-pop: 0 6px 20px light-dark(rgb(16 25 46 / 14%), rgb(0 0 0 / 45%));
+
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@media (pointer: fine) {
+    :root {
+        --control-h: 2.125rem; /* 34px */
+    }
+}
+
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+/* ------------------------------------------------------------------- reset */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: var(--text-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    margin: 0;
+    line-height: 1.25;
+    font-weight: 700;
+}
+
+h1 {
+    font-size: var(--text-title);
+    letter-spacing: -0.01em;
+}
+
+/* Every section heading below the page title is an eyebrow, not a headline:
+   it labels a region for someone scanning, and steps out of the way. */
+h2, h3 {
+    font-size: var(--text-ui);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+a {
+    color: var(--ink-soft);
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.15em;
+}
+
+a:hover {
+    color: var(--ink);
+    text-decoration-color: currentcolor;
+}
+
+input, select, textarea, button {
+    font: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 1px;
+}
+
+::selection {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.mono {
+    font-family: var(--mono);
+    font-size: var(--text-small);
+}
+
+.numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------- shell */
+
+/*
+ * The unqualified state is the phone: the rail is a drawer sitting off-screen,
+ * the destinations are a bar under the thumb, and the page is one column edge
+ * to edge. Everything a wider screen affords is added at a breakpoint, never
+ * taken back.
+ *
+ * The rail has three widths and two ways of reaching them — a stored cookie, or
+ * the stylesheet's own call when nothing is stored — so the folded look is
+ * declared once here as three inherited properties, and each state only sets
+ * values. In the drawer the rail is always full: whatever was folded on a
+ * desktop, a panel that slid in to show six icons would be absurd.
+ */
+.app {
+    display: flex;
+    min-height: 100dvh;
+
+    --rail-current-w: var(--rail-w);
+    --rail-label-opacity: 1;
+    --rail-section-visibility: visible;
+}
+
+.rail-region {
+    flex: none;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 240ms;
+}
+
+.drawer-open .rail-region {
+    visibility: visible;
+    transform: none;
+    transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
+}
+
+.drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    border: 0;
+    padding: 0;
+    background: rgb(9 15 28 / 55%);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 240ms ease, visibility 0s 240ms;
+}
+
+.drawer-open .drawer-backdrop {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 240ms ease, visibility 0s;
+}
+
+/* The page behind an open drawer or sheet does not scroll under the thumb. */
+body.is-locked {
+    overflow: hidden;
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Room for the tab bar at the bottom, which is fixed and would otherwise sit
+   on top of the last row of the list. */
+.page {
+    padding: var(--space-5) var(--space-5) calc(3.75rem + var(--space-7));
+}
+
+/* -------------------------------------------------------------------- rail */
+
+/*
+ * A permanent rail for two destinations is hard to justify on its own — but it
+ * carries the pinned projects and the session, and it is the only place a
+ * persistent element can live without eating vertical space on every screen.
+ * Collapsed it is 52px of icons; the choice is a cookie, so it survives a
+ * reload and works with scripting off.
+ */
+.rail {
+    width: var(--rail-current-w);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-5) 0;
+    background: var(--rail);
+    color: var(--rail-ink);
+    overflow: hidden;
+    box-shadow: 0 0 40px rgb(0 0 0 / 35%);
+}
+
+.rail-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-5) var(--space-5);
+    color: var(--rail-ink);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.rail-brand img {
+    flex: none;
+}
+
+.rail-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0 var(--space-3);
+}
+
+.rail-nav a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    height: var(--touch-h);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius);
+    color: var(--rail-ink);
+    font-size: var(--text-body);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.rail-nav a:hover {
+    background: var(--rail-raised);
+    color: var(--rail-ink);
+}
+
+/* The current page is marked by weight and by a filled ground, not by the
+   accent: the orange is spent on the mark and the focus ring alone. */
+.rail-nav a[aria-current='page'] {
+    background: var(--rail-raised);
+    font-weight: 700;
+}
+
+.rail-nav svg {
+    flex: none;
+    opacity: 0.9;
+}
+
+.rail-section {
+    margin-top: var(--space-7);
+    padding: 0 var(--space-5);
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.rail-section-title {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-micro);
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--rail-faint);
+}
+
+.rail-pins {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.rail-pin {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    height: 2.25rem;
+    padding: 0 var(--space-2);
+    margin: 0 calc(var(--space-2) * -1);
+    border-radius: var(--radius);
+    color: var(--rail-faint);
+    font-size: var(--text-meta);
+    text-decoration: none;
+}
+
+.rail-pin:hover {
+    background: var(--rail-raised);
+    color: var(--rail-ink);
+}
+
+.rail-pin-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rail-pin-count {
+    font-variant-numeric: tabular-nums;
+}
+
+/* A pinned project with a blocked ticket shows it here, so the alert reaches
+   the eye from any screen and not only from the dashboard. */
+.rail-pin-dot {
+    width: 5px;
+    height: 5px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--status-todo);
+}
+
+.rail-pin-dot.is-blocked {
+    background: var(--status-blocked);
+}
+
+.rail-foot {
+    margin-top: auto;
+    padding: var(--space-4) var(--space-5) 0;
+    border-top: 1px solid var(--rail-raised);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.rail-user {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-small);
+    color: var(--rail-faint);
+}
+
+.rail-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-h);
+    height: var(--control-h);
+    flex: none;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--rail-faint);
+    cursor: pointer;
+}
+
+.rail-icon-button:hover {
+    background: var(--rail-raised);
+    color: var(--rail-ink);
+}
+
+/* Closing is a tap outside, Escape, or this — a target the thumb finds without
+   having to aim at the edge of the panel. */
+.drawer-close {
+    display: flex;
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-h);
+    height: var(--touch-h);
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--rail-faint);
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ tabbar */
+
+/*
+ * The destinations under the thumb. What the rail carries besides them — the
+ * pinned projects, the session — would not fit here, so the rail itself becomes
+ * the drawer this bar opens rather than being dropped.
+ */
+.tabbar {
+    display: flex;
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 12;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tabbar-nav {
+    flex: 1;
+    display: flex;
+}
+
+.tabbar a,
+.tabbar-menu {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 3.75rem;
+    border: 0;
+    background: transparent;
+    color: var(--ink-faint);
+    font-size: var(--text-small);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.tabbar-menu {
+    flex: none;
+    width: 5.25rem;
+    border-left: 1px solid var(--line);
+}
+
+.tabbar a[aria-current='page'] {
+    background: var(--sunken);
+    color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ topbar */
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    height: var(--topbar-h);
+    flex: none;
+    padding: 0 var(--space-4) 0 var(--space-3);
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+}
+
+.topbar form {
+    display: flex;
+    flex: none;
+    gap: var(--space-1);
+}
+
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-h);
+    height: var(--control-h);
+    flex: none;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+}
+
+.icon-button:hover {
+    background: var(--sunken);
+    color: var(--ink);
+}
+
+.icon-button-outlined {
+    border: 1px solid var(--line);
+}
+
+.icon-button-outlined:hover {
+    border-color: var(--line-strong);
+}
+
+/* The rail is not on screen to be folded on a phone, so its toggle is out of
+   the document until a rail exists. Both buttons ship in every state — the fold
+   is applied without rebuilding the page, so the one about to be needed has to
+   be there already — and each breakpoint reveals the one that posts the
+   opposite of what the reader is looking at. */
+.rail-toggle {
+    display: none;
+}
+
+/*
+ * The theme toggle, same principle: the button on screen carries the icon of
+ * the theme in force and posts the other one. The root attribute drives the
+ * choice, so a swap applied by the script — which sets that attribute and
+ * nothing else — reveals the right button on its own.
+ */
+.theme-to-light {
+    display: none;
+}
+
+:root[data-theme='dark'] .theme-to-dark { display: none; }
+:root[data-theme='dark'] .theme-to-light { display: flex; }
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .theme-to-dark { display: none; }
+    :root:not([data-theme]) .theme-to-light { display: flex; }
+}
+
+/*
+ * The swap is covered rather than shown: two shutters close over the icon, the
+ * theme changes underneath, and they open on the new one. What the eye follows
+ * is the circle sweeping the page from this button — the view transition the
+ * script drives — and not a glyph mutating in place.
+ */
+.theme-toggle {
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-shutter {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--ink-soft);
+    transition: width 160ms ease;
+}
+
+.theme-shutter-left { left: 0; }
+.theme-shutter-right { right: 0; }
+
+.theme-swapping .theme-shutter {
+    width: 51%;
+}
+
+::view-transition-image-pair(root) {
+    isolation: none;
+}
+
+::view-transition-old(root) {
+    animation: none;
+}
+
+::view-transition-new(root) {
+    animation: none;
+    z-index: 1;
+}
+
+/* The trail is the only navigation state on screen once the rail is collapsed,
+   so it stays legible: the last crumb is the current place, in full ink. */
+.crumbs {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    overflow: hidden;
+    font-size: var(--text-ui);
+}
+
+.crumbs a,
+.crumbs span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.crumbs a {
+    color: var(--ink-soft);
+    flex: none;
+    max-width: 21rem;
+}
+
+.crumbs a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+}
+
+.crumbs-current {
+    color: var(--ink);
+    font-weight: 700;
+    min-width: 0;
+}
+
+.crumbs-sep {
+    color: var(--line-strong);
+    flex: none;
+}
+
+/* ----------------------------------------------------------------- flashes */
+
+/* A flash is a strip across the top of the content, not a card inside it: it
+   belongs to the moment, not to the page, and it must not push the list down
+   by a whole card's height. */
+.flash {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--line);
+    background: var(--sunken);
+    color: var(--ink-soft);
+    font-size: var(--text-ui);
+}
+
+.flash::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 50%;
+    background: currentcolor;
+}
+
+.flash-success {
+    background: var(--tint-done);
+    border-bottom-color: color-mix(in srgb, var(--status-done) 30%, var(--line));
+    color: var(--status-done);
+}
+
+.flash-error {
+    background: var(--tint-blocked);
+    border-bottom-color: color-mix(in srgb, var(--status-blocked) 30%, var(--line));
+    color: var(--status-blocked);
+}
+
+/* --------------------------------------------------------------- page head */
+
+.page-head {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.page-head-main {
+    min-width: 0;
+}
+
+.page-head p {
+    margin: 2px 0 0;
+    color: var(--ink-faint);
+    font-size: var(--text-meta);
+}
+
+.page-head-actions {
+    display: flex;
+    gap: var(--space-3);
+    flex: none;
+}
+
+.page-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.page-path {
+    margin: 2px 0 0;
+    max-width: 40rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: var(--text-tiny);
+    color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------- grids */
+
+/*
+ * The lists are CSS grids rather than tables. A table cannot reflow into a card
+ * without duplicating the markup, and the server has no idea how wide the
+ * screen is — one grid with named areas gives a readable card on a phone and
+ * thirty dense rows on a monitor, from a single pass of HTML.
+ *
+ * The card is the unqualified state, and the row arrives when the list is wide
+ * enough to hold one — which is a question about the list, not about the
+ * window. Between 1200 and 1600px the filter card takes a third of the screen
+ * away, and a rule written on the viewport cannot see that: the sheet in
+ * service truncates its last column at 1440px for exactly that reason, 798px of
+ * columns in 774px of room. So `.grid` declares itself a container and the row
+ * rules are asked of its own width. Three states, all of them measured:
+ *
+ *   under 43rem  — the card
+ *   43rem        — the row, with the cell each list can most afford to drop
+ *   57rem        — the row entire
+ */
+.grid {
+    container-type: inline-size;
+    border: 1px solid var(--line);
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    margin: 0 calc(var(--space-5) * -1);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.grid-head {
+    display: none;
+}
+
+.grid-row {
+    display: grid;
+    min-height: 3.875rem;
+    padding: var(--space-4) var(--space-5);
+    column-gap: var(--space-3);
+    row-gap: 3px;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+    border-left: var(--gutter-w) solid transparent;
+    text-decoration: none;
+    color: inherit;
+}
+
+.grid-row:last-child {
+    border-bottom: 0;
+}
+
+.grid-row:hover {
+    background: var(--sunken);
+    color: inherit;
+}
+
+/* The gutter is the answer to "which project is in trouble?". It is a stripe,
+   not a colour on the text: it survives at a glance across thirty rows, and it
+   reads as a mark in the margin rather than as an error state on the row. */
+.grid-row.is-blocked {
+    border-left-color: var(--status-blocked);
+}
+
+/* Archived and closed rows stay in the list at full contrast. Dimming them cost
+   more than it said: half-opacity ink falls under the readable threshold, and
+   the state was already spelled out next to the name — a badge on an archived
+   project, a badge on a revoked token, the status column on a closed ticket. */
+
+.grid-row > * {
+    min-width: 0;
+}
+
+/* The name is the title of the card and gets the line to itself: sharing it
+   with the date left one letter of "harusi" on a 390px screen. */
+.grid-projects .grid-row {
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas:
+        'name   name   name'
+        'key    active blocked'
+        'path   when   when';
+}
+
+.grid-tickets .grid-row {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+        'key   status status'
+        'title title  title'
+        'type  actor  when';
+}
+
+.grid-tokens .grid-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        'label    action'
+        'agent    selector'
+        'scopes   scopes'
+        'used     used';
+}
+
+.c-key { grid-area: key; }
+.c-name { grid-area: name; font-size: var(--text-lead); }
+.c-path { grid-area: path; }
+.c-active { grid-area: active; }
+.c-blocked { grid-area: blocked; }
+.c-when { grid-area: when; }
+.c-title { grid-area: title; font-size: var(--text-lead); line-height: 1.4; text-wrap: pretty; }
+.c-type { grid-area: type; }
+.c-status { grid-area: status; }
+.c-actor { grid-area: actor; }
+.c-label { grid-area: label; font-size: var(--text-lead); font-weight: 700; }
+.c-selector { grid-area: selector; text-align: right; }
+.c-agent { grid-area: agent; }
+.c-scopes { grid-area: scopes; overflow-wrap: anywhere; }
+.c-used { grid-area: used; text-align: left; }
+.c-action { grid-area: action; }
+
+.c-key {
+    font-family: var(--mono);
+    font-size: var(--text-small);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.c-path,
+.c-selector,
+.c-agent,
+.c-scopes {
+    font-family: var(--mono);
+    font-size: var(--text-tiny);
+    color: var(--ink-faint);
+}
+
+.c-type {
+    font-size: var(--text-micro);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+.c-when,
+.c-used {
+    font-size: var(--text-tiny);
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+.c-active,
+.c-blocked {
+    font-size: var(--text-tiny);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+}
+
+/* A zero is not news. Only a count that is actually there earns full ink, and
+   only a blocked count earns the alert colour. */
+.c-active.is-zero,
+.c-blocked.is-zero {
+    color: var(--ink-faint);
+}
+
+.c-blocked:not(.is-zero) {
+    color: var(--status-blocked);
+    font-weight: 700;
+}
+
+/* The rule crosses out the title without taking ink from it. Now that the row
+   is no longer dimmed, the border colour was too faint to read as a mark. */
+.c-title.is-closed {
+    text-decoration: line-through;
+    text-decoration-color: var(--ink-faint);
+    text-decoration-thickness: 1px;
+}
+
+.c-actor {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* One scope per line. Joined into a sentence they wrap mid-word at whatever
+   width is left, and "comments:write" cut after "comments:" is unreadable. */
+.grid-tokens .c-scopes span {
+    display: block;
+    line-height: 1.35;
+}
+
+.grid-empty {
+    padding: 2.5rem var(--space-6);
+    text-align: center;
+}
+
+.grid-empty p {
+    margin: 0;
+    font-size: var(--text-lead);
+    font-weight: 700;
+}
+
+/* The empty state says what will fill it. Nobody has to do anything here — the
+   agents create the rows — and that is exactly what is not obvious. */
+.grid-empty p + p {
+    margin: var(--space-1) auto 0;
+    max-width: 29rem;
+    font-size: var(--text-ui);
+    font-weight: 400;
+    color: var(--ink-faint);
+}
+
+.grid-note {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-tiny);
+    color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ badges */
+
+.badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: var(--radius);
+    font-size: var(--text-tiny);
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--badge-color, var(--ink-soft));
+    background: var(--badge-tint, var(--sunken));
+}
+
+.badge-todo { --badge-color: var(--status-todo); --badge-tint: var(--tint-todo); }
+.badge-in_progress { --badge-color: var(--status-in_progress); --badge-tint: var(--tint-in_progress); }
+.badge-blocked { --badge-color: var(--status-blocked); --badge-tint: var(--tint-blocked); }
+.badge-done { --badge-color: var(--status-done); --badge-tint: var(--tint-done); }
+
+.badge-plain {
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.badge-archived {
+    --badge-color: var(--ink-faint);
+    --badge-tint: transparent;
+    border: 1px solid var(--line-strong);
+    font-weight: 600;
+}
+
+.badge-alert {
+    --badge-color: var(--status-blocked);
+    --badge-tint: transparent;
+    border: 1px solid var(--status-blocked);
+    font-size: var(--text-micro);
+}
+
+/* ------------------------------------------------------------------ actors */
+
+/*
+ * Who did this — an agent or a human, and which agent. The distinction has to
+ * hold in black and white, so it is carried by fill: an agent is a solid chip
+ * in its own colour, a human is the same chip outlined and empty. The colour
+ * then tells the agents apart, and the monogram tells them apart again for
+ * anyone who sees neither.
+ */
+.actor {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    font-size: var(--text-meta);
+    color: var(--ink-soft);
+    white-space: nowrap;
+}
+
+.actor-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+    border: 1px solid var(--actor-color, var(--ink-faint));
+    border-radius: var(--radius);
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.actor-agent .actor-chip {
+    background: var(--actor-color, var(--ink-faint));
+    color: #fff;
+}
+
+.actor-human .actor-chip {
+    background: transparent;
+    color: var(--actor-color, var(--ink-faint));
+}
+
+.actor-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ----------------------------------------------------------------- results */
+
+/*
+ * Results left, filters right — the pattern taken from KDS — but only once
+ * there is a right to speak of. Below 1200px the panel leaves the flow and
+ * becomes a sheet the reader pulls up: sitting in the column it cost a
+ * screenful before the first row, and the reader had to scroll past the whole
+ * form to reach the results it filters.
+ */
+.results {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+}
+
+.results-main {
+    min-width: 0;
+}
+
+.filters-trigger {
+    display: inline-flex;
+    align-items: center;
+    height: var(--control-h);
+    padding: 0 var(--space-6);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: var(--text-ui);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.filters-switch:focus-visible + .filters-trigger {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.filters-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgb(16 25 46 / 45%);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 260ms ease, visibility 0s 260ms;
+}
+
+.filters {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 21;
+    max-height: 85dvh;
+    overflow-y: auto;
+    padding: var(--space-4) var(--space-6) calc(var(--space-6) + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    border-radius: var(--radius) var(--radius) 0 0;
+    background: var(--surface);
+    box-shadow: 0 -8px 24px rgb(16 25 46 / 18%);
+    transform: translateY(100%);
+    transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filters-switch:checked ~ .filters {
+    transform: none;
+}
+
+.filters-switch:checked ~ .filters-scrim {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 260ms ease, visibility 0s;
+}
+
+/* The bar the thumb reaches for. */
+.filters-grab {
+    display: block;
+    width: 34px;
+    height: 3px;
+    margin: 0 auto var(--space-4);
+    border-radius: 2px;
+    background: var(--line-strong);
+    cursor: pointer;
+}
+
+.filters-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+}
+
+/* A sheet says what it is in plain words, not as an eyebrow over a card. */
+.filters-head strong {
+    font-size: var(--text-lead);
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.filters-close {
+    display: inline;
+    color: var(--ink-soft);
+    font-size: var(--text-ui);
+    cursor: pointer;
+}
+
+.filters-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.filters-summary {
+    margin: var(--space-4) 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+    font-size: var(--text-small);
+    color: var(--ink-faint);
+}
+
+/* The resolution filter only means something once closed tickets are in the
+   list. Dimmed and disabled rather than hidden: the reader learns the rule. */
+.filters .field-dependent {
+    opacity: 0.55;
+}
+
+.filters .field-dependent:has(select:not(:disabled)) {
+    opacity: 1;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-6);
+    margin-top: var(--space-5);
+    font-size: var(--text-meta);
+    color: var(--ink-soft);
+}
+
+.pagination-links {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* ------------------------------------------------------------------- forms */
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.field + .field {
+    margin-top: var(--space-4);
+}
+
+.filters-body .field + .field {
+    margin-top: 0;
+}
+
+.field > label,
+fieldset > legend {
+    font-size: var(--text-small);
+    font-weight: 700;
+    color: var(--ink-soft);
+    padding: 0;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='date'],
+input[type='search'],
+select,
+textarea {
+    width: 100%;
+    height: var(--control-h);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: var(--text-ui);
+}
+
+textarea {
+    height: auto;
+    min-height: 5.5rem;
+    padding: var(--space-3);
+    line-height: 1.55;
+    resize: vertical;
+}
+
+select {
+    padding-right: var(--space-6);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    background: var(--sunken);
+    color: var(--ink-faint);
+}
+
+::placeholder {
+    color: var(--ink-faint);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+    accent-color: var(--button-fill);
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+    flex: none;
+}
+
+.help,
+.form-help {
+    margin: 0;
+    font-size: var(--text-small);
+    color: var(--ink-faint);
+}
+
+ul.form-error-messages,
+.form-error-message {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--status-blocked);
+    font-size: var(--text-small);
+    font-weight: 700;
+}
+
+.field-invalid input,
+.field-invalid select,
+.field-invalid textarea,
+.field-invalid .dropdown-button {
+    border-color: var(--status-blocked);
+}
+
+fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.choice-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-top: 2px;
+}
+
+.choice-row,
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--control-h);
+    font-size: var(--text-meta);
+    color: var(--ink-soft);
+    cursor: pointer;
+}
+
+.choice-row label {
+    margin: 0;
+    font-weight: 400;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    height: var(--control-h);
+    padding: 0 var(--space-6);
+    border: 1px solid var(--button-fill);
+    border-radius: var(--radius);
+    background: var(--button-fill);
+    color: #fff;
+    font-size: var(--text-ui);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.button:hover {
+    background: var(--button-fill-hover);
+    border-color: var(--button-fill-hover);
+    color: #fff;
+}
+
+.button-quiet {
+    background: var(--surface);
+    border-color: var(--line-strong);
+    color: var(--ink);
+}
+
+.button-quiet:hover {
+    background: var(--sunken);
+    border-color: var(--ink-faint);
+    color: var(--ink);
+}
+
+.button-danger {
+    background: transparent;
+    border-color: var(--line-strong);
+    color: var(--status-blocked);
+    font-weight: 600;
+}
+
+.button-danger:hover {
+    background: var(--tint-blocked);
+    border-color: var(--status-blocked);
+    color: var(--status-blocked);
+}
+
+.button-block {
+    width: 100%;
+}
+
+/* Reset is a link that happens to sit among buttons; making it look like one
+   would give it the same weight as applying the filter. */
+.link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--text-small);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.link-button:hover {
+    color: var(--ink);
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-top: var(--space-5);
+}
+
+.actions .help {
+    font-size: var(--text-small);
+}
+
+/* ---------------------------------------------------------------- dropdown */
+
+/*
+ * A <select> is a good control. It is also the one control in this interface
+ * that cannot show what it is choosing between: the status filter offers four
+ * words where the list it filters shows four coloured chips, and the reader has
+ * to translate between the two. The dropdown exists for that — the option
+ * carries the same chip as the row — and for nothing else. It is not here
+ * because native menus are ugly.
+ *
+ * Three rules govern it:
+ *
+ *   1. The <select> stays in the markup, always, and is the field that gets
+ *      submitted. The dropdown writes into it and fires `change`, so the
+ *      auto-submit already in place keeps working and the server sees nothing
+ *      new. With scripting off, the native menu is what the reader gets.
+ *   2. It only ever replaces the native menu on `(hover: hover) and
+ *      (pointer: fine)`. Under a finger the system wheel — full height, inertia,
+ *      one thumb — beats anything written here, and that is not a matter of
+ *      screen width: a touch laptop at 1440px is still a finger.
+ *   3. The script builds it everywhere and the media query decides what shows,
+ *      so plugging in a mouse is a repaint rather than a rebuild.
+ */
+.select {
+    position: relative;
+}
+
+.dropdown-button,
+.dropdown-popup {
+    display: none;
+}
+
+.dropdown-button {
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    width: 100%;
+    height: var(--control-h);
+    padding: 0 var(--space-3) 0 var(--space-4);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: var(--text-ui);
+    text-align: left;
+    cursor: pointer;
+}
+
+.dropdown-button:hover,
+.select.is-open .dropdown-button {
+    border-color: var(--ink-faint);
+}
+
+.dropdown-button[disabled] {
+    background: var(--sunken);
+    color: var(--ink-faint);
+    cursor: default;
+}
+
+.dropdown-value {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.dropdown-caret {
+    flex: none;
+    color: var(--ink-faint);
+    transition: transform 140ms ease;
+}
+
+.select.is-open .dropdown-caret {
+    transform: rotate(180deg);
+}
+
+/* The popup is anchored to the field rather than to the viewport: it opens on
+   the field it changes, and it is the field the eye is already on. */
+.dropdown-popup {
+    position: absolute;
+    z-index: 25;
+    top: calc(100% + 3px);
+    left: 0;
+    right: 0;
+    max-height: 16rem;
+    overflow-y: auto;
+    padding: var(--space-1);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow-pop);
+}
+
+/* Near the bottom of the window the list opens upwards instead of scrolling the
+   page under the reader. The script measures and sets this. */
+.dropdown-popup.is-above {
+    top: auto;
+    bottom: calc(100% + 3px);
+}
+
+.dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 2rem;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius);
+    color: var(--ink-soft);
+    font-size: var(--text-ui);
+    cursor: pointer;
+}
+
+/* One highlight, driven by the keyboard and by the mouse alike — the script
+   moves it on hover too, so there is never a second, competing highlight. */
+.dropdown-option.is-active {
+    background: var(--sunken);
+    color: var(--ink);
+}
+
+.dropdown-option[aria-selected='true'] {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.dropdown-check {
+    display: flex;
+    width: 0.875rem;
+    flex: none;
+    color: var(--ink-faint);
+    opacity: 0;
+}
+
+.dropdown-option[aria-selected='true'] .dropdown-check {
+    opacity: 1;
+}
+
+.dropdown-label {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .select.has-dropdown > select {
+        display: none;
+    }
+
+    .select.has-dropdown > .dropdown-button {
+        display: flex;
+    }
+
+    .select.has-dropdown.is-open > .dropdown-popup {
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dropdown-caret {
+        transition-duration: 0s;
+    }
+}
+
+/* ------------------------------------------------------------------ ticket */
+
+.ticket-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-7);
+}
+
+.ticket-key {
+    flex: none;
+    padding-top: 4px;
+    font-family: var(--mono);
+    font-size: var(--text-ui);
+    font-weight: 700;
+    color: var(--ink-faint);
+    white-space: nowrap;
+}
+
+/* Only once the script has made it a button. The padding is what a press needs
+   and the negative margin gives it back, so the key sits where it did before
+   the copy existed — flush with the heading, not indented by its own hit
+   area. */
+.ticket-key.is-copyable {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 2px 0 0 calc(var(--space-2) * -1);
+    padding: 2px var(--space-2);
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    font-family: var(--mono);
+    font-size: var(--text-ui);
+    font-weight: 700;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.ticket-key.is-copyable:hover {
+    background: var(--sunken);
+    color: var(--ink);
+}
+
+/* The one moment the key stops being metadata. It says the press landed, then
+   goes quiet again. */
+.ticket-key.is-copied,
+.ticket-key.is-copied:hover {
+    background: var(--tint-done);
+    color: var(--status-done);
+}
+
+.copy-mark {
+    display: flex;
+    opacity: 0.65;
+}
+
+.ticket-key.is-copyable:hover .copy-mark,
+.ticket-key.is-copied .copy-mark {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ticket-key.is-copyable {
+        transition-duration: 0s;
+    }
+}
+
+.ticket-head h1 {
+    max-width: 56rem;
+    text-wrap: pretty;
+}
+
+.ticket-head .badge {
+    margin-top: 4px;
+    flex: none;
+    padding: 2px 9px;
+    font-size: var(--text-small);
+}
+
+.ticket-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-7);
+    align-items: start;
+}
+
+.ticket-main {
+    min-width: 0;
+}
+
+.ticket-aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-7);
+}
+
+/* The reading measure is capped here rather than on the shell: this is the one
+   block on the screen where a 1900px line would actually hurt. */
+.ticket-description {
+    max-width: 47.5rem;
+    margin-bottom: 1.625rem;
+    color: var(--ink-soft);
+    font-size: var(--text-lead);
+    line-height: 1.65;
+}
+
+.section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.section-head span {
+    font-size: var(--text-small);
+    color: var(--ink-faint);
+}
+
+.ticket-comment-form {
+    margin-top: 1.625rem;
+    max-width: 51rem;
+}
+
+/* Editing a ticket by hand is the exception — the agents do it — so the form
+   is folded away behind its own heading instead of taking a screenful. */
+.panel > summary {
+    font-size: var(--text-small);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    cursor: pointer;
+}
+
+.panel[open] > summary {
+    margin-bottom: var(--space-4);
+}
+
+/* A folded form above a full-width list, rather than beside it. */
+.form-panel {
+    margin-bottom: var(--space-6);
+    padding: var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+/* Two columns as soon as there is room, so a four-field form does not stand
+   taller than the list it belongs to. */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0 var(--space-6);
+    align-items: start;
+}
+
+.form-grid > .field:first-child {
+    margin-top: 0;
+}
+
+.meta-list {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-3) var(--space-5);
+    align-items: baseline;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: var(--text-ui);
+}
+
+.meta-list dt {
+    color: var(--ink-faint);
+    font-size: var(--text-small);
+}
+
+.meta-list dd {
+    margin: 0;
+    color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- timeline */
+
+/*
+ * Two natures of entry share one chronology, and they are not given equal
+ * weight. A comment is a body of text and gets a surface to sit on; a status
+ * change is one line and gets no container at all — a box around six words
+ * would make the log look busier than the discussion. The rail dot separates
+ * them again: filled for a comment, hollow for a change.
+ */
+.timeline {
+    margin: 0;
+    padding: 0 0 0 1.125rem;
+    border-left: 1px solid var(--line);
+    list-style: none;
+    max-width: 51rem;
+}
+
+.timeline > li {
+    position: relative;
+    padding-bottom: var(--space-5);
+}
+
+.timeline > li:last-child {
+    padding-bottom: 0;
+}
+
+/* The dot is centred on the rail rather than offset by a hand-counted amount:
+   the padding takes it back to the border box, the half pixel to the middle of
+   the 1px rule, and the translation does the rest. */
+.timeline > li::before {
+    content: '';
+    position: absolute;
+    left: calc(-1.125rem - 0.5px);
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: var(--canvas);
+}
+
+/* Scoped through the list like the rule above, and not on the class alone: a
+   bare .timeline-comment::before weighs less than .timeline > li::before, so
+   the whole variant — diameter, fill, border — silently lost to the default. */
+.timeline > .timeline-change::before {
+    top: 0.5625rem;
+}
+
+.timeline > .timeline-comment::before {
+    top: 0.4375rem;
+    width: 9px;
+    height: 9px;
+    border-color: var(--ink-faint);
+    background: var(--ink-faint);
+}
+
+.timeline-change {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    font-size: var(--text-ui);
+    color: var(--ink-soft);
+}
+
+.timeline-changes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.timeline-changes li + li {
+    margin-top: 2px;
+}
+
+.timeline-changes .from {
+    text-decoration: line-through;
+    color: var(--ink-faint);
+}
+
+.timeline-changes .to {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.timeline-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-ui);
+}
+
+.timeline-head .actor-name {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.timeline-head time,
+.timeline-change time {
+    color: var(--ink-faint);
+    font-size: var(--text-small);
+}
+
+.timeline-body {
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: var(--text-body);
+    line-height: 1.6;
+}
+
+.attachments {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-ui);
+}
+
+.attachments li + li {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+}
+
+.attachments .help {
+    display: block;
+}
+
+.empty-note {
+    margin: 0;
+    font-size: var(--text-meta);
+    color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------- prose */
+
+.prose > :first-child { margin-top: 0; }
+.prose > :last-child { margin-bottom: 0; }
+.prose p { margin: 0 0 var(--space-4); }
+.prose ul, .prose ol { margin: 0 0 var(--space-4); padding-left: 1.25rem; }
+.prose li + li { margin-top: 2px; }
+.prose strong { color: var(--ink); }
+
+.prose code {
+    padding: 0 4px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--sunken);
+    font-family: var(--mono);
+    font-size: 0.9em;
+}
+
+.prose pre {
+    overflow-x: auto;
+    padding: var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--sunken);
+}
+
+.prose pre code {
+    border: 0;
+    background: none;
+    padding: 0;
+}
+
+.prose blockquote {
+    margin: 0 0 var(--space-4);
+    padding-left: var(--space-4);
+    border-left: 2px solid var(--line-strong);
+    color: var(--ink-soft);
+}
+
+/* -------------------------------------------------------------- api tokens */
+
+/*
+ * The plain token is shown once and never again. It gets the accent — the only
+ * screen besides the mark and the focus ring where the orange is spent — a
+ * heading that says what to do, and no competing action next to it.
+ */
+.token-reveal {
+    margin: 0 0 var(--space-6);
+    padding: var(--space-5) var(--space-6);
+    border: 1px solid var(--accent);
+    border-left-width: var(--gutter-w);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.token-reveal-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-lead);
+    font-weight: 700;
+}
+
+.token-reveal-warning::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.token-reveal-value {
+    display: block;
+    overflow-wrap: anywhere;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--sunken);
+    font-family: var(--mono);
+    font-size: var(--text-ui);
+    user-select: all;
+}
+
+.token-reveal .help {
+    margin-top: var(--space-3);
+}
+
+/* ------------------------------------------------------------------- login */
+
+.login {
+    display: flex;
+    min-height: 100dvh;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+}
+
+.login-inner {
+    width: 100%;
+    max-width: 22.5rem;
+}
+
+.login-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-7);
+    font-size: 1.3125rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.login-card {
+    padding: var(--space-6);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.login-alert {
+    margin: 0 0 var(--space-5);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--status-blocked);
+    border-left-width: var(--gutter-w);
+    border-radius: var(--radius);
+    background: var(--tint-blocked);
+    color: var(--status-blocked);
+    font-size: var(--text-ui);
+}
+
+.login-card .toggle {
+    margin-top: var(--space-4);
+}
+
+.login-note {
+    margin: var(--space-5) 0 0;
+    font-size: var(--text-small);
+    color: var(--ink-faint);
+}
+
+/* ============================================ 43.75rem / 700px — navigation */
+
+/*
+ * The drawer becomes a rail and the tab bar leaves. Nothing else moves: the
+ * list is still a card list, the filters are still a sheet. This breakpoint is
+ * about where the destinations live, and about nothing else.
+ */
+@media (min-width: 43.75rem) {
+    .rail-region {
+        position: static;
+        visibility: visible;
+        transform: none;
+        transition: none;
+    }
+
+    .rail {
+        position: sticky;
+        top: 0;
+        box-shadow: none;
+        transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Below 1200px the rail is folded to its icons unless the reader has
+       pinned it open — the content needs the width more than the labels do. */
+    .app:not(.rail-wide) {
+        --rail-current-w: var(--rail-w-narrow);
+        --rail-label-opacity: 0;
+        --rail-section-visibility: hidden;
+    }
+
+    /*
+     * Collapsed: the icons stay, every label goes. They fade out rather than
+     * being dropped from the flow — display cannot be animated, and removing
+     * the labels would re-centre the icons mid-fold, turning a fold into a
+     * jolt. The labels keep naming their link for a screen reader while
+     * invisible, which display: none took away. The pinned projects, being
+     * links, need more than transparency: visibility takes them out of the tab
+     * order, delayed so it lands once the fade is over.
+     */
+    .rail .rail-label,
+    .rail-user {
+        opacity: var(--rail-label-opacity);
+        transition: opacity 140ms ease;
+    }
+
+    .rail-section {
+        opacity: var(--rail-label-opacity);
+        visibility: var(--rail-section-visibility);
+        transition: opacity 140ms ease, visibility 0s;
+    }
+
+    .app:not(.rail-wide) .rail-section {
+        overflow-y: hidden;
+        transition: opacity 140ms ease, visibility 0s 140ms;
+    }
+
+    .rail-nav a {
+        height: 2.25rem;
+    }
+
+    .tabbar,
+    .drawer-backdrop,
+    .drawer-close {
+        display: none;
+    }
+
+    /* The toggle appears with the rail it folds, and only one of its two
+       buttons ever shows: the one that posts the opposite of what is there. */
+    .app:not(.rail-wide) .rail-toggle-expand,
+    .app.rail-wide .rail-toggle-collapse {
+        display: flex;
+    }
+
+    .page {
+        padding: var(--space-6) var(--space-7) 2.5rem;
+    }
+
+    .page-head {
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: var(--space-7);
+    }
+
+    .grid {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        margin: 0;
+    }
+}
+
+/* ======================================== the list, asked of its own width */
+
+/*
+ * Cards become rows. The threshold is a measurement rather than a device: with
+ * the type one notch up, the six ticket columns need 681px of room to hold
+ * their floors, so 43rem is where the row stops being a truncation contest.
+ *
+ * Asked of the container and not of the window, this rule holds in the one
+ * place a viewport rule cannot: the same 1440px screen carries a 1088px list
+ * with the filters in a sheet and a 766px list with the filters in a column.
+ */
+@container (min-width: 43rem) {
+    .grid-head,
+    .grid-row {
+        display: grid;
+        grid-template-columns: var(--cols);
+        align-items: center;
+        column-gap: var(--space-4);
+    }
+
+    .grid-head {
+        height: var(--head-h);
+        padding: 0 var(--space-4) 0 calc(var(--space-4) + var(--gutter-w));
+        background: var(--sunken);
+        border-bottom: 1px solid var(--line);
+        font-size: var(--text-micro);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+    }
+
+    /*
+     * A sortable heading. It inherits the head's own treatment — small,
+     * uppercased, faint — because it is still a column heading first; what
+     * marks it as a control is the arrow and the ink it gains under the
+     * pointer, not a colour that would make five of the six cells shout.
+     *
+     * The arrow only shows on the column actually sorted, and on the one under
+     * the pointer, where it shows the direction a press would give. Six arrows
+     * standing permanently in a 34px band would read as decoration.
+     */
+    .grid-sort {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        max-width: 100%;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .grid-sort:hover,
+    .grid-sort.is-active {
+        color: var(--ink);
+    }
+
+    .grid-sort-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sort-mark {
+        display: flex;
+        flex: none;
+        opacity: 0;
+        transition: opacity 120ms ease;
+    }
+
+    /* The pointer gets a preview rather than a promise, and a lighter one: the
+       arrow on an unsorted column is the direction a press would give, not a
+       direction in force. The rule below outranks it by coming after. */
+    .grid-sort:hover .sort-mark,
+    .grid-sort:focus-visible .sort-mark {
+        opacity: 0.5;
+    }
+
+    .grid-sort.is-active .sort-mark {
+        opacity: 1;
+    }
+
+    .sort-mark-asc {
+        transform: rotate(180deg);
+    }
+
+    /* A heading that wraps would overflow a row locked to 34px. The columns are
+       sized for their heading, so this only fails loudly if one is ever too
+       narrow — which is the point. */
+    .grid-head > * {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .grid-row {
+        height: var(--row-h);
+        min-height: 0;
+        padding: 0 var(--space-4);
+        row-gap: 0;
+    }
+
+    .grid-row > * {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /*
+     * The fixed columns are the type scale expressed in width: they grew by the
+     * same 11% as the text they hold, because a 15px date left in a 10.625rem
+     * column is the scale change showing up as an ellipsis.
+     *
+     * This is the narrow set, and each list gives up the one cell it can most
+     * afford to lose. The ticket list keeps its actor as the chip alone — the
+     * colour and the shape are what the eye reads at a glance anyway, and the
+     * name costs 8.5rem. The dashboard drops the path, which is the one column
+     * nobody scans. The tokens list drops the agent slug, which its label
+     * repeats in words. Nothing is dropped that cannot be read on the screen
+     * the row leads to.
+     *
+     * The card templates are named on `.grid-tickets .grid-row` and outweigh
+     * anything said about `.grid-row` alone — hence the same specificity here,
+     * and the `--cols` on the row rather than on the grid: a container query
+     * styles what is inside the container, never the container itself.
+     */
+    .grid-projects .grid-head,
+    .grid-projects .grid-row {
+        --cols: 5.875rem minmax(10rem, 1fr) 4.875rem 5.5rem 10.5rem;
+    }
+
+    .grid-tickets .grid-head,
+    .grid-tickets .grid-row {
+        --cols: 6rem minmax(9rem, 1fr) 5.125rem 6.125rem 2rem 9.75rem;
+    }
+
+    .grid-tokens .grid-head,
+    .grid-tokens .grid-row {
+        --cols: 6.125rem minmax(6.75rem, 1fr) minmax(8.375rem, 1.3fr) 10.5rem 6.375rem;
+    }
+
+    .grid-projects .grid-row,
+    .grid-tickets .grid-row,
+    .grid-tokens .grid-row {
+        grid-template-columns: var(--cols);
+        grid-template-areas: none;
+    }
+
+    /* The head has no classes on its cells — it is six spans in the order of
+       the columns — so the one that leaves is named by its rank. If a column is
+       ever inserted, this is where it shows. */
+    .grid-projects .c-path,
+    .grid-projects .grid-head > :nth-child(3),
+    .grid-tokens .c-agent,
+    .grid-tokens .grid-head > :nth-child(3) {
+        display: none;
+    }
+
+    .grid-tickets .actor-name {
+        display: none;
+    }
+
+    /* The heading of a column two characters wide would read "OU…". The cell
+       stays, to hold the column; the word waits. */
+    .grid-tickets .grid-head > :nth-child(5) {
+        visibility: hidden;
+    }
+
+    /* Every area assignment is undone at once: in a row the order of the
+       children is the order of the columns, which is what the markup says. */
+    .c-key, .c-name, .c-path, .c-active, .c-blocked, .c-when, .c-title,
+    .c-type, .c-status, .c-actor, .c-label, .c-selector, .c-agent,
+    .c-scopes, .c-used, .c-action {
+        grid-area: auto;
+    }
+
+    .c-name { font-size: inherit; }
+    .c-title { font-size: inherit; line-height: inherit; }
+    .c-label { font-size: inherit; }
+
+    .c-when,
+    .c-used {
+        text-align: right;
+        font-size: var(--text-meta);
+    }
+
+    .c-active,
+    .c-blocked {
+        text-align: right;
+        font-size: inherit;
+    }
+
+    .c-selector,
+    .c-used {
+        text-align: left;
+    }
+
+    .c-when {
+        text-align: right;
+    }
+
+    .c-action {
+        text-align: right;
+    }
+
+    /* The only list whose rows breathe: a token carries its scopes, and a scope
+       list is the one cell here that has to be read in full rather than
+       scanned. */
+    .grid-tokens .grid-row {
+        height: auto;
+        min-height: var(--row-h);
+        padding-top: var(--space-1);
+        padding-bottom: var(--space-1);
+    }
+
+    .grid-tokens .c-scopes {
+        white-space: normal;
+    }
+}
+
+/*
+ * The room for everything. Every column comes back and the title, the name and
+ * the path get the floors they deserve — 57rem is where the widest of the three
+ * lists (the tickets, at 897px of floors) fits without one column stealing from
+ * another. On a 1920px screen the list sits at 84rem and is never anywhere else.
+ */
+@container (min-width: 57rem) {
+    .grid-projects .grid-head,
+    .grid-projects .grid-row {
+        --cols: 5.875rem minmax(9.75rem, 1fr) minmax(12.5rem, 1.4fr) 4.875rem 5.5rem 10.5rem;
+    }
+
+    .grid-tickets .grid-head,
+    .grid-tickets .grid-row {
+        --cols: 6rem minmax(14rem, 1fr) 5.125rem 6.125rem 10.5rem 9.75rem;
+    }
+
+    /* The scope column is the one that must never be cut — a scope truncated to
+       "comments…" says nothing — so it gets a floor and the widest share of
+       what is left. The selector and the agent slug have known, short shapes. */
+    .grid-tokens .grid-head,
+    .grid-tokens .grid-row {
+        --cols: 6.125rem minmax(6.75rem, 1fr) 7.75rem minmax(8.375rem, 1.3fr) 10.5rem 6.375rem;
+    }
+
+    .grid-projects .c-path,
+    .grid-projects .grid-head > :nth-child(3),
+    .grid-tokens .c-agent,
+    .grid-tokens .grid-head > :nth-child(3),
+    .grid-tickets .actor-name {
+        display: block;
+    }
+
+    .grid-tickets .grid-head > :nth-child(5) {
+        visibility: visible;
+    }
+}
+
+/* ========================================== 75rem / 1200px — the aside */
+
+/*
+ * The rail unfolds, and the ticket screen gets its column of metadata back.
+ * Nothing happens to the lists here: they answer to their own box.
+ */
+@media (min-width: 75rem) {
+    .ticket-detail {
+        grid-template-columns: minmax(0, 1fr) 20rem;
+    }
+
+    .ticket-aside {
+        position: sticky;
+        top: calc(var(--topbar-h) + var(--space-4));
+    }
+
+    .meta-list dd {
+        text-align: right;
+    }
+
+    /* Above 1200px the rail is open unless the reader has folded it. */
+    .app:not(.rail-narrow) {
+        --rail-current-w: var(--rail-w);
+        --rail-label-opacity: 1;
+        --rail-section-visibility: visible;
+    }
+
+    .app:not(.rail-narrow) .rail-section {
+        overflow-y: auto;
+        transition: opacity 140ms ease, visibility 0s;
+    }
+
+    .app.rail-narrow {
+        --rail-current-w: var(--rail-w-narrow);
+        --rail-label-opacity: 0;
+        --rail-section-visibility: hidden;
+    }
+
+    .app.rail-narrow .rail-section {
+        overflow-y: hidden;
+        transition: opacity 140ms ease, visibility 0s 140ms;
+    }
+
+    .app:not(.rail-narrow) .rail-toggle-expand { display: none; }
+    .app:not(.rail-narrow) .rail-toggle-collapse { display: flex; }
+    .app.rail-narrow .rail-toggle-collapse { display: none; }
+    .app.rail-narrow .rail-toggle-expand { display: flex; }
+}
+
+/* ========================================= 87.5rem / 1400px — results */
+
+/*
+ * Results left, filters right — from 1400px and not from 1200, which is where
+ * this rule used to sit. At 1200 the filter card takes a third of the screen
+ * and leaves the list 608px, narrower than the card list it replaces, and the
+ * columns pay for the card. The sheet costs one line above the
+ * results and gives the list the whole width — 932px at 1200, enough for all
+ * six columns at their full floors. The column earns its place at 1400, where
+ * what is left is still a proper list.
+ *
+ * The card is 20rem and not a fraction: a filter form has a width it wants, and
+ * on a 2560px screen a third of the screen would be a third of nothing.
+ */
+@media (min-width: 87.5rem) {
+    .results {
+        grid-template-columns: minmax(0, 1fr) 20rem;
+    }
+
+    /* The markup puts the filters first so a single column reaches them before
+       a screenful of rows; here they go back to the right-hand column. */
+    .results-main { order: 1; }
+    .results-side { order: 2; }
+
+    /* `inset` before `top`, and not after: the shorthand resets all four sides,
+       so the other order quietly threw the offset away. */
+    .results .filters {
+        position: sticky;
+        inset: auto;
+        top: calc(var(--topbar-h) + var(--space-4));
+        max-height: none;
+        overflow: visible;
+        padding: var(--space-5);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: none;
+        transform: none;
+        inset: auto;
+    }
+
+    .filters-trigger,
+    .filters-scrim,
+    .filters-grab,
+    .filters-close {
+        display: none;
+    }
+
+    /* A card is labelled by an eyebrow; only a sheet introduces itself. */
+    .filters-head strong {
+        font-size: var(--text-small);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+    }
+}
+
+/* ------------------------------------------- motion, when it is wanted */
+
+/*
+ * Every animation here is a movement the reader asked for — a fold, a drawer, a
+ * sheet — so none of it is decoration that can simply be dropped. What the
+ * preference removes is the travel: the same states, reached at once.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .rail,
+    .rail .rail-label,
+    .rail-user,
+    .rail-section,
+    .rail-region,
+    .drawer-backdrop,
+    .filters,
+    .filters-scrim {
+        transition-duration: 0s;
+    }
+}

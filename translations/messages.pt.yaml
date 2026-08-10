@@ -1,0 +1,252 @@
+app:
+    name: "tsutsumbi"
+    nav:
+        label: "Navegação principal"
+        breadcrumb: "Trilha de navegação"
+        projects: "Projetos"
+        tokens: "Tokens"
+        recent: "Atividade recente"
+        logout: "Terminar sessão"
+        menu: "Menu"
+        close_menu: "Fechar o menu"
+    rail:
+        collapse: "Recolher a barra"
+        expand: "Expandir a barra"
+    theme:
+        to_dark: "Mudar para o tema escuro"
+        to_light: "Mudar para o tema claro"
+
+security:
+    login:
+        title: "Iniciar sessão"
+        email: "Endereço de e-mail"
+        password: "Palavra-passe"
+        remember_me: "Manter a sessão iniciada"
+        submit: "Iniciar sessão"
+        note: "Instância privada. Os agentes autenticam-se com um token de API."
+
+dashboard:
+    title: "Projetos"
+    subtitle: "ordenados por atividade decrescente"
+    summary:
+        projects: "{0}nenhum projeto|{1}1 projeto|]1,Inf[ %count% projetos"
+        active: "{0}nenhum ticket aberto|{1}1 ticket aberto|]1,Inf[ %count% tickets abertos"
+        blocked: "{0}nenhum ticket bloqueado|{1}1 ticket bloqueado|]1,Inf[ %count% tickets bloqueados"
+    legend: "Um filete vermelho na margem assinala um projeto com pelo menos um ticket bloqueado. Os projetos arquivados permanecem na lista, em segundo plano."
+    empty:
+        title: "Nenhum projeto acompanhado."
+        body: "Os projetos aparecem sozinhos: o primeiro agente que abre um ticket a partir de um repositório cria o projeto correspondente. Aqui não há nada a fazer."
+    show_archived: "Mostrar os arquivados"
+    hide_archived: "Ocultar os arquivados"
+
+actor:
+    kind:
+        human: "humano"
+        agent: "agente"
+
+project:
+    archived: "Arquivado"
+    column:
+        key: "Chave"
+        name: "Nome"
+        path: "Caminho"
+        active_tickets: "Abertos"
+        blocked_tickets: "Bloqueados"
+        last_activity: "Última atividade"
+    action:
+        archive: "Arquivar o projeto"
+        unarchive: "Desarquivar o projeto"
+    flash:
+        archived: "Projeto arquivado. Nada se perde: continua consultável."
+        unarchived: "Projeto desarquivado."
+
+ticket:
+    status:
+        todo: "A fazer"
+        in_progress: "Em curso"
+        blocked: "Bloqueado"
+        done: "Concluído"
+    resolution:
+        fixed: "Resolvido"
+        wont_do: "Não será feito"
+        abandoned: "Abandonado"
+        duplicate: "Duplicado"
+        obsolete: "Obsoleto"
+    type:
+        feature: "Funcionalidade"
+        bug: "Correção"
+        chore: "Tarefa"
+        refactor: "Refatoração"
+        docs: "Documentação"
+        infra: "Infraestrutura"
+    # Abreviaturas para a coluna «Tipo» da lista, demasiado estreita para as
+    # etiquetas completas. Não são usadas em mais nenhum sítio.
+    type_short:
+        feature: "Func."
+        bug: "Bug"
+        chore: "Tarefa"
+        refactor: "Refat."
+        docs: "Docs"
+        infra: "Infra"
+    priority:
+        low: "Baixa"
+        normal: "Normal"
+        high: "Alta"
+    field:
+        title: "Título"
+        description: "Descrição"
+        type: "Tipo"
+        status: "Estado"
+        resolution: "Resolução"
+        priority: "Prioridade"
+    column:
+        key: "Chave"
+        title: "Título"
+        type: "Tipo"
+        status: "Estado"
+        priority: "Prioridade"
+        created_by: "Aberto por"
+        created_at: "Aberto em"
+        started_at: "Iniciado em"
+        closed_at: "Fechado em"
+        updated_at: "Atualizado"
+    filter:
+        legend: "Filtros"
+        search: "Pesquisa"
+        search_placeholder: "Título, descrição, comentários…"
+        search_help: "O corpo dos comentários está indexado."
+        status: "Estado"
+        type: "Tipo"
+        resolution: "Resolução"
+        resolution_help: "Disponível com os tickets fechados."
+        any: "Todos"
+        show_closed: "Incluir os tickets fechados"
+        submit: "Filtrar"
+        reset: "Repor"
+        close: "Fechar"
+        result_count: "{0}nenhum ticket|{1}1 ticket|]1,Inf[ %count% tickets"
+    # Lido em voz alta atrás do cabeçalho da coluna sobre a qual incide a
+    # ordenação.
+    sort:
+        asc: "ordenado por ordem crescente"
+        desc: "ordenado por ordem decrescente"
+    list:
+        empty:
+            title: "Nenhum ticket corresponde."
+            body: "Alargue a pesquisa, ou deixe que o próximo agente a trabalhar neste repositório abra um."
+    section:
+        description: "Descrição"
+        timeline: "Cronologia"
+    no_description: "Sem descrição."
+    key:
+        copied: "Chave copiada."
+    timeline:
+        empty: "Ainda não aconteceu nada neste ticket."
+        count: "{0}nenhuma entrada|{1}1 entrada|]1,Inf[ %count% entradas"
+        rewritten: "reescrita"
+        empty_value: "vazio"
+    action:
+        edit: "Modificar o ticket"
+        save: "Guardar"
+        copy_key: "Copiar a chave %key%"
+        change_status: "Mudar o estado"
+        reopen_or_change: "Reabrir ou mudar a resolução"
+        apply: "Aplicar"
+    form:
+        title:
+            label: "Título"
+        description:
+            label: "Descrição"
+            help: "Markdown aceite."
+            placeholder: "A necessidade, a restrição, o que fica fora do âmbito."
+        type:
+            label: "Tipo"
+        priority:
+            label: "Prioridade"
+        status:
+            label: "Estado"
+        resolution:
+            label: "Resolução"
+            placeholder: "Nenhuma"
+            help: "Obrigatória para fechar, proibida nos restantes casos."
+        note:
+            label: "Comentário"
+            help: "Obrigatório para passar a bloqueado. Um bloqueio silencioso é o pior dos estados."
+            placeholder: "O que bloqueia, ou o que foi decidido."
+    flash:
+        updated: "Ticket atualizado."
+        status_changed: "Estado atualizado."
+
+attachment:
+    section:
+        title: "Anexos"
+    empty: "Nenhum. Os agentes anexam raramente."
+    comment: "Anexo «%name%»: %reason%"
+
+comment:
+    section:
+        add: "Adicionar um comentário"
+    action:
+        add: "Comentar"
+    form:
+        body:
+            label: "Comentário"
+            help: "Markdown aceite."
+            placeholder: "Uma decisão de conceção não trivial merece ser anotada aqui."
+    flash:
+        added: "Comentário adicionado."
+
+api_token:
+    title: "Tokens de API"
+    subtitle: "Os agentes autenticam-se com estes tokens. A criação e a revogação passam apenas por aqui."
+    empty:
+        title: "Nenhum token."
+        body: "Sem token, nenhum agente pode escrever no tsutsumbi."
+    never_used: "Nunca utilizado"
+    scope:
+        projects_write: "Criação e resolução de projetos"
+        tickets_write: "Criação e atualização de tickets"
+        comments_write: "Adição de comentários"
+        attachments_write: "Adição de anexos"
+    column:
+        selector: "Seletor"
+        label: "Etiqueta"
+        agent: "Agente"
+        scopes: "Âmbitos"
+        last_used: "Última utilização"
+    state:
+        revoked: "Revogado"
+        expired: "Expirado"
+        expires: "Expira em %date%"
+    section:
+        create: "Novo token"
+    action:
+        create: "Criar o token"
+        revoke: "Revogar"
+    confirm:
+        revoke: "Revogar este token? O agente que o usa será recusado logo no pedido seguinte."
+    reveal:
+        warning: "Copie este token agora. Nunca mais voltará a ser mostrado."
+        stored: "Apenas o seletor é conservado do lado do servidor; o token em si não existe em lado nenhum."
+    flash:
+        created: "Token criado."
+        revoked: "Token revogado."
+    form:
+        label:
+            label: "Etiqueta"
+            help: "Para o reconhecer mais tarde."
+            placeholder: "portátil / claude-code"
+        agent_slug:
+            label: "Agente"
+            help: "Criado automaticamente se ainda não existir."
+        scopes:
+            label: "Âmbitos"
+            help: "Conceda o mínimo necessário."
+        expires_at:
+            label: "Expiração"
+            help: "Facultativa. Sem data, o token permanece válido até à revogação."
+
+pagination:
+    summary: "Página %page% de %pages%, %total% tickets"
+    previous: "Anterior"
+    next: "Seguinte"

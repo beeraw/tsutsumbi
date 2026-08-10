@@ -1,0 +1,19 @@
+api:
+    error:
+        unauthorized: "Authentification requise"
+        forbidden: "Accès refusé"
+        not_found: "Ressource introuvable"
+        malformed_request: "Requête mal formée"
+        validation_failed: "Les données envoyées sont invalides"
+        invalid_ticket_state: "État de ticket invalide"
+        invalid_project_path: "Chemin de projet invalide"
+        attachment_rejected: "Pièce jointe refusée"
+        rate_limited: "Trop de requêtes"
+        internal: "Erreur interne"
+        token:
+            missing: "Aucun jeton n'a été présenté"
+            scheme: "Le jeton doit être présenté avec le schéma Bearer"
+            malformed: "Le format du jeton est invalide"
+            invalid: "Le jeton est inconnu ou incorrect"
+            revoked: "Le jeton a été révoqué"
+            expired: "Le jeton a expiré"

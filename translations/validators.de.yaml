@@ -1,0 +1,61 @@
+project:
+    path:
+        not_blank: "Der Projektpfad ist erforderlich."
+        too_long: "Der Projektpfad darf {{ limit }} Zeichen nicht überschreiten."
+    name:
+        too_long: "Der Projektname darf {{ limit }} Zeichen nicht überschreiten."
+
+ticket:
+    title:
+        not_blank: "Der Titel ist erforderlich."
+        too_long: "Der Titel darf {{ limit }} Zeichen nicht überschreiten."
+    type:
+        not_blank: "Der Typ ist erforderlich."
+        invalid: "Der Typ ist ungültig."
+    status:
+        invalid: "Der Status ist ungültig."
+    resolution:
+        invalid: "Die Lösung ist ungültig."
+    priority:
+        invalid: "Die Priorität ist ungültig."
+    updated_since:
+        invalid: "Das Datum muss im Format ISO 8601 vorliegen."
+    # Ablehnungen aus der Domäne selbst, dargestellt als Formularfehler.
+    state:
+        resolution_required: "Ein erledigtes Ticket muss eine Lösung tragen."
+        resolution_forbidden: "Eine Lösung kann nur auf einem erledigten Ticket gesetzt werden."
+        note_required: "Der Wechsel auf blockiert erfordert einen Kommentar, der die Ursache erklärt."
+
+comment:
+    body:
+        not_blank: "Der Kommentar darf nicht leer sein."
+        too_long: "Der Kommentar darf {{ limit }} Zeichen nicht überschreiten."
+
+api_token:
+    label:
+        not_blank: "Die Bezeichnung ist erforderlich."
+        too_long: "Die Bezeichnung darf {{ limit }} Zeichen nicht überschreiten."
+    agent_slug:
+        not_blank: "Der Agent ist erforderlich."
+        too_long: "Der Agent-Slug darf {{ limit }} Zeichen nicht überschreiten."
+        invalid: "Der Slug muss aus Kleinbuchstaben, Ziffern und Bindestrichen bestehen, zum Beispiel claude-code."
+    scopes:
+        not_empty: "Gewähren Sie mindestens einen Geltungsbereich."
+    expires_at:
+        past: "Das Ablaufdatum muss in der Zukunft liegen."
+
+pagination:
+    page:
+        invalid: "Die Seitenzahl muss größer als null sein."
+    per_page:
+        invalid: "Die Anzahl der Elemente pro Seite muss größer als null sein."
+        too_large: "Die Anzahl der Elemente pro Seite darf {{ compared_value }} nicht überschreiten."
+
+attachment:
+    no_file: "Es wurde keine Datei gesendet."
+    missing_reason: "Ein Anhang muss von der Begründung begleitet sein, die ihn rechtfertigt."
+    unsupported_media_type: "Der Dateityp %type% wird nicht akzeptiert."
+    upload_too_large: "Die Datei überschreitet %limit% vor der Komprimierung."
+    too_large_after_compression: "Die Datei überschreitet auch nach der Komprimierung noch %limit%."
+    ticket_budget_exhausted: "Dieses Ticket hat sein Anhangskontingent von %limit% erreicht."
+    unreadable_image: "Die Datei gibt sich als Bild aus, kann aber nicht als solches gelesen werden."

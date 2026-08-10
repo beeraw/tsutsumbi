@@ -1,0 +1,19 @@
+api:
+    error:
+        unauthorized: "Authentifizierung erforderlich"
+        forbidden: "Zugriff verweigert"
+        not_found: "Ressource nicht gefunden"
+        malformed_request: "Fehlerhafte Anfrage"
+        validation_failed: "Die übermittelten Daten sind ungültig"
+        invalid_ticket_state: "Ungültiger Ticketzustand"
+        invalid_project_path: "Ungültiger Projektpfad"
+        attachment_rejected: "Anhang abgelehnt"
+        rate_limited: "Zu viele Anfragen"
+        internal: "Interner Fehler"
+        token:
+            missing: "Es wurde kein Token vorgelegt"
+            scheme: "Das Token muss mit dem Bearer-Schema vorgelegt werden"
+            malformed: "Das Token-Format ist ungültig"
+            invalid: "Das Token ist unbekannt oder falsch"
+            revoked: "Das Token wurde widerrufen"
+            expired: "Das Token ist abgelaufen"

@@ -1,0 +1,61 @@
+project:
+    path:
+        not_blank: "The project path is required."
+        too_long: "The project path cannot exceed {{ limit }} characters."
+    name:
+        too_long: "The project name cannot exceed {{ limit }} characters."
+
+ticket:
+    title:
+        not_blank: "The title is required."
+        too_long: "The title cannot exceed {{ limit }} characters."
+    type:
+        not_blank: "The type is required."
+        invalid: "The type is invalid."
+    status:
+        invalid: "The status is invalid."
+    resolution:
+        invalid: "The resolution is invalid."
+    priority:
+        invalid: "The priority is invalid."
+    updated_since:
+        invalid: "The date must be in ISO 8601 format."
+    # Refusals raised by the domain itself, rendered as form errors.
+    state:
+        resolution_required: "A done ticket must carry a resolution."
+        resolution_forbidden: "A resolution can only be set on a done ticket."
+        note_required: "Moving to blocked requires a comment explaining the cause."
+
+comment:
+    body:
+        not_blank: "The comment cannot be empty."
+        too_long: "The comment cannot exceed {{ limit }} characters."
+
+api_token:
+    label:
+        not_blank: "The label is required."
+        too_long: "The label cannot exceed {{ limit }} characters."
+    agent_slug:
+        not_blank: "The agent is required."
+        too_long: "The agent slug cannot exceed {{ limit }} characters."
+        invalid: "The slug must be lowercase letters, digits and hyphens, for example claude-code."
+    scopes:
+        not_empty: "Grant at least one scope."
+    expires_at:
+        past: "The expiry date must be in the future."
+
+pagination:
+    page:
+        invalid: "The page number must be greater than zero."
+    per_page:
+        invalid: "The number of items per page must be greater than zero."
+        too_large: "The number of items per page cannot exceed {{ compared_value }}."
+
+attachment:
+    no_file: "No file was sent."
+    missing_reason: "An attachment must come with the reason that justifies it."
+    unsupported_media_type: "The file type %type% is not accepted."
+    upload_too_large: "The file is above %limit% before compression."
+    too_large_after_compression: "The file is still above %limit% after compression."
+    ticket_budget_exhausted: "This ticket has reached its attachment quota of %limit%."
+    unreadable_image: "The file presents itself as an image but cannot be read as one."

@@ -1,0 +1,15 @@
+{% import '_partials/icons.html.twig' as icon %}
+
+{# The destinations, rendered twice: in the rail, and in the tab bar a phone
+   gets instead of it. One source, so a third destination reaches both places
+   without anyone having to remember the second one. #}
+<a href="{{ path('app_dashboard') }}"
+   {{ app.request.attributes.get('_route') in ['app_dashboard', 'app_project_show', 'app_ticket_show'] ? 'aria-current="page"' : '' }}>
+    {{ icon.projects() }}
+    <span class="rail-label">{{ 'app.nav.projects'|trans }}</span>
+</a>
+<a href="{{ path('app_token_index') }}"
+   {{ app.request.attributes.get('_route') starts with 'app_token' ? 'aria-current="page"' : '' }}>
+    {{ icon.tokens() }}
+    <span class="rail-label">{{ 'app.nav.tokens'|trans }}</span>
+</a>

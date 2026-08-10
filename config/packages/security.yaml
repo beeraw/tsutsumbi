@@ -1,0 +1,71 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        users:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            # Ensure dev tools and static assets are always allowed
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        # Machine calls. Stateless by construction: no session, no cookie, the
+        # bearer token is verified again on every single request.
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: users
+            custom_authenticators:
+                - App\Security\ApiTokenAuthenticator
+            entry_point: App\Security\ApiTokenAuthenticator
+
+        # Humans, on a session.
+        main:
+            lazy: true
+            provider: users
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                username_parameter: email
+                password_parameter: password
+                enable_csrf: true
+                default_target_path: app_dashboard
+            logout:
+                path: app_logout
+                target: app_login
+                enable_csrf: true
+            login_throttling:
+                # Per username and IP. Enough room for a mistyped password,
+                # little enough that the form is not a place to try a list.
+                max_attempts: 5
+                interval: '15 minutes'
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800
+                secure: true
+                httponly: true
+                samesite: lax
+
+    # Note: Only the *first* matching rule is applied
+    access_control:
+        - { path: ^/api, roles: ROLE_API }
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        # Token and user management is reachable through a human session only:
+        # there is deliberately no administration scope on the machine side.
+        - { path: ^/, roles: ROLE_USER }
+
+when@test:
+    security:
+        password_hashers:
+            # Password hashers are resource-intensive by design to ensure security.
+            # In tests, it's safe to reduce their cost to improve performance.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon

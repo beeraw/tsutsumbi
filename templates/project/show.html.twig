@@ -1,0 +1,240 @@
+{% extends 'base.html.twig' %}
+
+{% import _self as ui %}
+
+{#
+   A sortable heading. Pressing it sorts on that column; pressing the one
+   already sorted turns it around, which is the whole vocabulary.
+
+   Every other filter travels in the link, and `page` deliberately does not:
+   page 7 of one order has nothing to do with page 7 of another, and landing
+   past the end of a re-sorted list would show an empty screen for no reason.
+#}
+{% macro sort_head(column, current, direction, project, query) %}
+    {% import '_partials/icons.html.twig' as icon %}
+    {% set active = current.value == column.value %}
+    {% set next = active ? direction.opposite.value : column.initialDirection.value %}
+    {% set params = query|filter((value, key) => key != 'page')|merge({
+        key: project.key, sort: column.value, dir: next,
+    }) %}
+
+    <a class="grid-sort{{ active ? ' is-active' : '' }}"
+       href="{{ path('app_project_show', params) }}"
+       {% if active %}aria-current="true"{% endif %}>
+        <span class="grid-sort-label">{{ column.translationKey|trans }}</span>
+        <span class="sort-mark sort-mark-{{ active ? direction.value : next }}">{{ icon.sort_arrow(13) }}</span>
+        {% if active %}
+            <span class="visually-hidden">{{ ('ticket.sort.'~direction.value)|trans }}</span>
+        {% endif %}
+    </a>
+{% endmacro %}
+
+{% block title %}{{ project.key }} · {{ 'app.name'|trans }}{% endblock %}
+
+{% block crumbs %}
+    <a href="{{ path('app_dashboard') }}">{{ 'dashboard.title'|trans }}</a>
+    <span class="crumbs-sep">/</span>
+    <span class="crumbs-current">{{ project.name }}</span>
+{% endblock %}
+
+{% block body %}
+    <div class="page-head">
+        <div class="page-head-main">
+            <div class="page-title-row">
+                <h1>{{ project.name }}</h1>
+                <span class="badge badge-plain">{{ project.key }}</span>
+                {% if project.archived %}
+                    <span class="badge badge-archived">{{ 'project.archived'|trans }}</span>
+                {% endif %}
+            </div>
+            <p class="page-path" title="{{ project.path }}">{{ project.path }}</p>
+        </div>
+
+        <div class="page-head-actions">
+            <form method="post" action="{{ path('app_project_archive', {key: project.key}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('archive' ~ project.key) }}">
+                <button type="submit" class="button button-quiet">
+                    {{ (project.archived ? 'project.action.unarchive' : 'project.action.archive')|trans }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# Filters first in the markup, results second: below 1400px there is one
+       column and the filters have to be reachable before a screenful of rows.
+       Above it, `order` puts the results back on the left where they belong. #}
+    <div class="results">
+        {# Below 1400px the panel leaves the flow and becomes a sheet the reader
+           pulls up. The switch is a checkbox rather than a script: the sheet
+           has to open on a first tap, and a class applied by a deferred script
+           would show the panel inline for a frame before folding it away.
+           Every label here points at that checkbox — the trigger, the scrim
+           behind the sheet, the grab handle and the close. #}
+        {% set active_filters = [search, app.request.query.get('status'), app.request.query.get('type'), app.request.query.get('resolution')]|filter(value => value)|length + (showClosed ? 1 : 0) %}
+
+        <div class="results-side">
+            <input type="checkbox" id="filters-switch" class="filters-switch visually-hidden">
+
+            <label class="filters-trigger" for="filters-switch">
+                {{ 'ticket.filter.legend'|trans }} · {{ active_filters }}
+            </label>
+
+            <label class="filters-scrim" for="filters-switch" aria-hidden="true"></label>
+
+            <div class="filters">
+                <label class="filters-grab" for="filters-switch" aria-hidden="true"></label>
+
+                <div class="filters-head">
+                    <strong>{{ 'ticket.filter.legend'|trans }}</strong>
+                    <label class="filters-close" for="filters-switch">{{ 'ticket.filter.close'|trans }}</label>
+                </div>
+
+                <form class="filters-body" method="get"
+                      action="{{ path('app_project_show', {key: project.key}) }}" data-autosubmit>
+                    <div class="field">
+                        <label for="q">{{ 'ticket.filter.search'|trans }}</label>
+                        <input type="search" id="q" name="q" value="{{ search }}"
+                               placeholder="{{ 'ticket.filter.search_placeholder'|trans }}">
+                        <p class="help">{{ 'ticket.filter.search_help'|trans }}</p>
+                    </div>
+
+                    {# The wrapper is what the script builds its menu inside, on
+                       a machine with a mouse. `data-badge` is what that menu can
+                       do and the native one cannot: show the status in the
+                       colour the rows use, so the filter and the list speak the
+                       same language. #}
+                    <div class="field">
+                        <label for="status">{{ 'ticket.filter.status'|trans }}</label>
+                        <div class="select">
+                            <select id="status" name="status">
+                                <option value="">{{ 'ticket.filter.any'|trans }}</option>
+                                {% for status in statuses %}
+                                    <option value="{{ status.value }}" data-badge="{{ status.value }}"
+                                            {{ app.request.query.get('status') == status.value ? 'selected' : '' }}>
+                                        {{ status.translationKey|trans }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="type">{{ 'ticket.filter.type'|trans }}</label>
+                        <div class="select">
+                            <select id="type" name="type">
+                                <option value="">{{ 'ticket.filter.any'|trans }}</option>
+                                {% for type in types %}
+                                    <option value="{{ type.value }}"
+                                            {{ app.request.query.get('type') == type.value ? 'selected' : '' }}>
+                                        {{ type.translationKey|trans }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    {# A resolution only exists on a closed ticket, so the filter
+                       is dead until closed tickets are in the list. Disabled and
+                       dimmed rather than hidden: the rule is worth learning. #}
+                    <div class="field field-dependent">
+                        <label for="resolution">{{ 'ticket.filter.resolution'|trans }}</label>
+                        <div class="select">
+                            <select id="resolution" name="resolution" {{ showClosed ? '' : 'disabled' }}>
+                                <option value="">{{ 'ticket.filter.any'|trans }}</option>
+                                {% for resolution in resolutions %}
+                                    <option value="{{ resolution.value }}"
+                                            {{ app.request.query.get('resolution') == resolution.value ? 'selected' : '' }}>
+                                        {{ resolution.translationKey|trans }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <p class="help">{{ 'ticket.filter.resolution_help'|trans }}</p>
+                    </div>
+
+                    <label class="toggle">
+                        <input type="checkbox" name="closed" value="1" {{ showClosed ? 'checked' : '' }}>
+                        {{ 'ticket.filter.show_closed'|trans }}
+                    </label>
+
+                    <button type="submit" class="button button-block">{{ 'ticket.filter.submit'|trans }}</button>
+
+                    <a class="link-button" href="{{ path('app_project_show', {key: project.key}) }}">
+                        {{ 'ticket.filter.reset'|trans }}
+                    </a>
+                </form>
+
+                <p class="filters-summary">
+                    {{ 'ticket.filter.result_count'|trans({'%count%': page.total}) }}
+                </p>
+            </div>
+        </div>
+
+        <div class="results-main">
+            <div class="grid grid-tickets">
+                {% if page.items is empty %}
+                    <div class="grid-empty">
+                        <p>{{ 'ticket.list.empty.title'|trans }}</p>
+                        <p>{{ 'ticket.list.empty.body'|trans }}</p>
+                    </div>
+                {% else %}
+                    {# The head used to be hidden from assistive technology: six
+                       words repeating what each cell says anyway. Now that five
+                       of them are controls it has to be readable — a focusable
+                       link inside an aria-hidden container is a control nobody
+                       can be told about. "Ouvert par" is the one that stays a
+                       word: see TicketSort for why it cannot be ordered on. #}
+                    {% set query = app.request.query.all %}
+                    <div class="grid-head">
+                        <span>{{ ui.sort_head(sorts.key, criteria.sort, criteria.direction, project, query) }}</span>
+                        <span>{{ ui.sort_head(sorts.title, criteria.sort, criteria.direction, project, query) }}</span>
+                        <span>{{ ui.sort_head(sorts.type, criteria.sort, criteria.direction, project, query) }}</span>
+                        <span>{{ ui.sort_head(sorts.status, criteria.sort, criteria.direction, project, query) }}</span>
+                        <span>{{ 'ticket.column.created_by'|trans }}</span>
+                        <span class="numeric">{{ ui.sort_head(sorts.updated, criteria.sort, criteria.direction, project, query) }}</span>
+                    </div>
+
+                    {% for ticket in page.items %}
+                        <a class="grid-row{{ ticket.status.value == 'blocked' ? ' is-blocked' : '' }}"
+                           href="{{ path('app_ticket_show', {key: ticket.key}) }}">
+                            <span class="c-key">{{ ticket.key }}</span>
+                            <span class="c-title{{ ticket.closed ? ' is-closed' : '' }}">{{ ticket.title }}</span>
+                            <span class="c-type" title="{{ ticket.type.translationKey|trans }}">
+                                {{- ticket.type.shortTranslationKey|trans -}}
+                            </span>
+                            <span class="c-status">{% include '_partials/status.html.twig' %}</span>
+                            <span class="c-actor">
+                                {% with {actor: ticket.createdBy} %}{% include '_partials/actor.html.twig' %}{% endwith %}
+                            </span>
+                            <span class="c-when">
+                                <time datetime="{{ ticket.updatedAt|date('c') }}">
+                                    {{ ticket.updatedAt|format_datetime('medium', 'short') }}
+                                </time>
+                            </span>
+                        </a>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            {% if page.pageCount > 1 %}
+                <div class="pagination">
+                    <span>{{ 'pagination.summary'|trans({'%page%': page.page, '%pages%': page.pageCount, '%total%': page.total}) }}</span>
+                    <span class="pagination-links">
+                        {% if page.page > 1 %}
+                            <a class="button button-quiet"
+                               href="{{ path('app_project_show', app.request.query.all|merge({key: project.key, page: page.page - 1})) }}">
+                                {{ 'pagination.previous'|trans }}
+                            </a>
+                        {% endif %}
+                        {% if page.page < page.pageCount %}
+                            <a class="button button-quiet"
+                               href="{{ path('app_project_show', app.request.query.all|merge({key: project.key, page: page.page + 1})) }}">
+                                {{ 'pagination.next'|trans }}
+                            </a>
+                        {% endif %}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

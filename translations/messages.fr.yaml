@@ -1,0 +1,251 @@
+app:
+    name: "tsutsumbi"
+    nav:
+        label: "Navigation principale"
+        breadcrumb: "Fil d'Ariane"
+        projects: "Projets"
+        tokens: "Jetons"
+        recent: "Activité récente"
+        logout: "Se déconnecter"
+        menu: "Menu"
+        close_menu: "Fermer le menu"
+    rail:
+        collapse: "Réduire le rail"
+        expand: "Déployer le rail"
+    theme:
+        to_dark: "Passer en thème sombre"
+        to_light: "Passer en thème clair"
+
+security:
+    login:
+        title: "Connexion"
+        email: "Adresse e-mail"
+        password: "Mot de passe"
+        remember_me: "Rester connecté"
+        submit: "Se connecter"
+        note: "Instance privée. Les agents s'authentifient par jeton d'API."
+
+dashboard:
+    title: "Projets"
+    subtitle: "triés par activité décroissante"
+    summary:
+        projects: "{0}aucun projet|{1}1 projet|]1,Inf[ %count% projets"
+        active: "{0}aucun ticket actif|{1}1 ticket actif|]1,Inf[ %count% tickets actifs"
+        blocked: "{0}aucun ticket bloqué|{1}1 ticket bloqué|]1,Inf[ %count% tickets bloqués"
+    legend: "Un liseré rouge en gouttière signale un projet qui porte au moins un ticket bloqué. Les projets archivés restent en liste, en retrait."
+    empty:
+        title: "Aucun projet suivi."
+        body: "Les projets apparaissent seuls : le premier agent qui ouvre un ticket depuis un dépôt crée le projet correspondant. Rien à faire ici."
+    show_archived: "Afficher les archivés"
+    hide_archived: "Masquer les archivés"
+
+actor:
+    kind:
+        human: "humain"
+        agent: "agent"
+
+project:
+    archived: "Archivé"
+    column:
+        key: "Clé"
+        name: "Nom"
+        path: "Chemin"
+        active_tickets: "Actifs"
+        blocked_tickets: "Bloqués"
+        last_activity: "Dernière activité"
+    action:
+        archive: "Archiver le projet"
+        unarchive: "Désarchiver le projet"
+    flash:
+        archived: "Projet archivé. Rien n'est perdu : il reste consultable."
+        unarchived: "Projet désarchivé."
+
+ticket:
+    status:
+        todo: "À faire"
+        in_progress: "En cours"
+        blocked: "Bloqué"
+        done: "Terminé"
+    resolution:
+        fixed: "Fait"
+        wont_do: "Ne sera pas fait"
+        abandoned: "Abandonné"
+        duplicate: "Doublon"
+        obsolete: "Obsolète"
+    type:
+        feature: "Fonctionnalité"
+        bug: "Correction"
+        chore: "Tâche"
+        refactor: "Refonte"
+        docs: "Documentation"
+        infra: "Infrastructure"
+    # Abréviations pour la colonne « Type » de la liste, trop étroite pour les
+    # libellés complets. Utilisées nulle part ailleurs.
+    type_short:
+        feature: "Fonct."
+        bug: "Bug"
+        chore: "Tâche"
+        refactor: "Refonte"
+        docs: "Doc"
+        infra: "Infra"
+    priority:
+        low: "Basse"
+        normal: "Normale"
+        high: "Haute"
+    field:
+        title: "Titre"
+        description: "Description"
+        type: "Type"
+        status: "Statut"
+        resolution: "Résolution"
+        priority: "Priorité"
+    column:
+        key: "Clé"
+        title: "Titre"
+        type: "Type"
+        status: "Statut"
+        priority: "Priorité"
+        created_by: "Ouvert par"
+        created_at: "Ouvert le"
+        started_at: "Démarré le"
+        closed_at: "Clos le"
+        updated_at: "Mis à jour"
+    filter:
+        legend: "Filtres"
+        search: "Recherche"
+        search_placeholder: "Titre, description, commentaires…"
+        search_help: "Le corps des commentaires est indexé."
+        status: "Statut"
+        type: "Type"
+        resolution: "Résolution"
+        resolution_help: "Disponible avec les tickets clos."
+        any: "Tous"
+        show_closed: "Inclure les tickets clos"
+        submit: "Filtrer"
+        reset: "Réinitialiser"
+        close: "Fermer"
+        result_count: "{0}aucun ticket|{1}1 ticket|]1,Inf[ %count% tickets"
+    # Lu à voix haute derrière l'en-tête de colonne sur laquelle porte le tri.
+    sort:
+        asc: "trié par ordre croissant"
+        desc: "trié par ordre décroissant"
+    list:
+        empty:
+            title: "Aucun ticket ne correspond."
+            body: "Élargissez la recherche, ou laissez le prochain agent qui travaille dans ce dépôt en ouvrir un."
+    section:
+        description: "Description"
+        timeline: "Fil chronologique"
+    no_description: "Pas de description."
+    key:
+        copied: "Clé copiée."
+    timeline:
+        empty: "Rien ne s'est encore passé sur ce ticket."
+        count: "{0}aucune entrée|{1}1 entrée|]1,Inf[ %count% entrées"
+        rewritten: "réécrite"
+        empty_value: "vide"
+    action:
+        edit: "Modifier le ticket"
+        save: "Enregistrer"
+        copy_key: "Copier la clé %key%"
+        change_status: "Changer le statut"
+        reopen_or_change: "Rouvrir ou changer la résolution"
+        apply: "Appliquer"
+    form:
+        title:
+            label: "Titre"
+        description:
+            label: "Description"
+            help: "Markdown accepté."
+            placeholder: "Le besoin, la contrainte, ce qui est hors périmètre."
+        type:
+            label: "Type"
+        priority:
+            label: "Priorité"
+        status:
+            label: "Statut"
+        resolution:
+            label: "Résolution"
+            placeholder: "Aucune"
+            help: "Obligatoire pour clore, interdite autrement."
+        note:
+            label: "Commentaire"
+            help: "Obligatoire pour passer en bloqué. Un blocage silencieux est le pire des états."
+            placeholder: "Ce qui bloque, ou ce qui a été décidé."
+    flash:
+        updated: "Ticket mis à jour."
+        status_changed: "Statut mis à jour."
+
+attachment:
+    section:
+        title: "Pièces jointes"
+    empty: "Aucune. Les agents en joignent rarement."
+    comment: "Pièce jointe « %name% » : %reason%"
+
+comment:
+    section:
+        add: "Ajouter un commentaire"
+    action:
+        add: "Commenter"
+    form:
+        body:
+            label: "Commentaire"
+            help: "Markdown accepté."
+            placeholder: "Une décision de conception non triviale mérite d'être notée ici."
+    flash:
+        added: "Commentaire ajouté."
+
+api_token:
+    title: "Jetons d'API"
+    subtitle: "Les agents s'authentifient avec ces jetons. La création et la révocation ne passent que par ici."
+    empty:
+        title: "Aucun jeton."
+        body: "Sans jeton, aucun agent ne peut écrire dans tsutsumbi."
+    never_used: "Jamais utilisé"
+    scope:
+        projects_write: "Création et résolution de projets"
+        tickets_write: "Création et mise à jour de tickets"
+        comments_write: "Ajout de commentaires"
+        attachments_write: "Ajout de pièces jointes"
+    column:
+        selector: "Sélecteur"
+        label: "Libellé"
+        agent: "Agent"
+        scopes: "Portées"
+        last_used: "Dernière utilisation"
+    state:
+        revoked: "Révoqué"
+        expired: "Expiré"
+        expires: "Expire le %date%"
+    section:
+        create: "Nouveau jeton"
+    action:
+        create: "Créer le jeton"
+        revoke: "Révoquer"
+    confirm:
+        revoke: "Révoquer ce jeton ? L'agent qui s'en sert sera refusé dès la prochaine requête."
+    reveal:
+        warning: "Copiez ce jeton maintenant. Il ne sera plus jamais affiché."
+        stored: "Seul le sélecteur est conservé côté serveur ; le jeton lui-même n'existe nulle part."
+    flash:
+        created: "Jeton créé."
+        revoked: "Jeton révoqué."
+    form:
+        label:
+            label: "Libellé"
+            help: "Pour vous y retrouver plus tard."
+            placeholder: "portable / claude-code"
+        agent_slug:
+            label: "Agent"
+            help: "Créé automatiquement s'il n'existe pas encore."
+        scopes:
+            label: "Portées"
+            help: "Accordez le minimum nécessaire."
+        expires_at:
+            label: "Expiration"
+            help: "Facultative. Sans date, le jeton reste valable jusqu'à révocation."
+
+pagination:
+    summary: "Page %page% sur %pages%, %total% tickets"
+    previous: "Précédent"
+    next: "Suivant"

@@ -1,0 +1,113 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'api_token.title'|trans }} · {{ 'app.name'|trans }}{% endblock %}
+
+{% block crumbs %}
+    <span class="crumbs-current">{{ 'api_token.title'|trans }}</span>
+{% endblock %}
+
+{% block body %}
+    <div class="page-head">
+        <div class="page-head-main">
+            <h1>{{ 'api_token.title'|trans }}</h1>
+            <p>{{ 'api_token.subtitle'|trans }}</p>
+        </div>
+    </div>
+
+    {# The plain token, once. It gets the accent — one of the two places the
+       orange is spent outside the mark — and nothing competes with it on the
+       line: there is exactly one thing to do here, and it expires with the
+       page. #}
+    {% for token in app.flashes('token') %}
+        <div class="token-reveal" role="status">
+            <p class="token-reveal-warning">{{ 'api_token.reveal.warning'|trans }}</p>
+            <code class="token-reveal-value">{{ token }}</code>
+            <p class="help">{{ 'api_token.reveal.stored'|trans }}</p>
+        </div>
+    {% endfor %}
+
+    {# Unlike the ticket list, this screen has nothing to filter: the card the
+       design puts on the right holds a creation form, not filters. Six columns
+       squeezed into two thirds of the width start cutting scopes and selectors
+       below 1330px, and a scope truncated to "comments…" says nothing. So the
+       list takes the full width and the form folds above it, where it costs one
+       line on a screen visited a few times a month. #}
+    <details class="panel form-panel" {{ form.vars.submitted ? 'open' : '' }}>
+        <summary>{{ 'api_token.section.create'|trans }}</summary>
+
+        {{ form_start(form) }}
+        {{ form_errors(form) }}
+        <div class="form-grid">
+            {{ form_row(form.label) }}
+            {{ form_row(form.agentSlug) }}
+            {{ form_row(form.scopes) }}
+            {{ form_row(form.expiresAt) }}
+        </div>
+        <div class="actions">
+            <button type="submit" class="button">{{ 'api_token.action.create'|trans }}</button>
+        </div>
+        {{ form_end(form) }}
+    </details>
+
+    <div class="grid grid-tokens">
+        {% if tokens is empty %}
+            <div class="grid-empty">
+                <p>{{ 'api_token.empty.title'|trans }}</p>
+                <p>{{ 'api_token.empty.body'|trans }}</p>
+            </div>
+        {% else %}
+            <div class="grid-head" aria-hidden="true">
+                <span>{{ 'api_token.column.selector'|trans }}</span>
+                <span>{{ 'api_token.column.label'|trans }}</span>
+                <span>{{ 'api_token.column.agent'|trans }}</span>
+                <span>{{ 'api_token.column.scopes'|trans }}</span>
+                <span>{{ 'api_token.column.last_used'|trans }}</span>
+                <span></span>
+            </div>
+
+            {% for token in tokens %}
+                <div class="grid-row">
+                    <span class="c-selector">{{ token.selector }}</span>
+                    <span class="c-label" title="{{ token.label }}">
+                        {{ token.label }}
+                        {% if token.revoked %}
+                            <span class="badge badge-alert">{{ 'api_token.state.revoked'|trans }}</span>
+                        {% elseif token.expired %}
+                            <span class="badge badge-archived">{{ 'api_token.state.expired'|trans }}</span>
+                        {% elseif token.expiresAt %}
+                            <span class="badge badge-archived">
+                                {{ 'api_token.state.expires'|trans({'%date%': token.expiresAt|format_date('short')}) }}
+                            </span>
+                        {% endif %}
+                    </span>
+                    <span class="c-agent">{{ token.agentSlug }}</span>
+                    <span class="c-scopes">
+                        {%- for scope in token.scopes %}<span>{{ scope }}</span>{% endfor -%}
+                    </span>
+                    <span class="c-used">
+                        {% if token.lastUsedAt %}
+                            <time datetime="{{ token.lastUsedAt|date('c') }}">
+                                {{ token.lastUsedAt|format_datetime('medium', 'short') }}
+                            </time>
+                        {% else %}
+                            {{ 'api_token.never_used'|trans }}
+                        {% endif %}
+                    </span>
+                    <span class="c-action">
+                        {% if not token.revoked %}
+                            <form method="post"
+                                  action="{{ path('app_token_revoke', {selector: token.selector}) }}">
+                                <input type="hidden" name="_token"
+                                       value="{{ csrf_token('revoke' ~ token.selector) }}">
+                                <button type="submit" class="button button-danger"
+                                        data-confirm="{{ 'api_token.confirm.revoke'|trans }}">
+                                    {{ 'api_token.action.revoke'|trans }}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+{% endblock %}

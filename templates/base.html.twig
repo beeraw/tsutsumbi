@@ -1,0 +1,175 @@
+{% import '_partials/icons.html.twig' as icon %}
+
+{# The two display preferences live in cookies and are applied here, while the
+   page is being built: the theme arrives with the HTML instead of being painted
+   over a flash of the wrong one, and neither needs a line of JavaScript.
+
+   The rail has no stored state by default — the stylesheet opens it above
+   1200px and folds it below. A cookie is an override of that rule, not a
+   replacement for it. #}
+{% set theme = app.request.cookies.get('theme') in ['light', 'dark'] ? app.request.cookies.get('theme') : null %}
+{% set rail = app.request.cookies.get('rail') in ['wide', 'narrow'] ? app.request.cookies.get('rail') : null %}
+
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}"{% if theme %} data-theme="{{ theme }}"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}{{ 'app.name'|trans }}{% endblock %}</title>
+
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0d131f" media="(prefers-color-scheme: dark)">
+
+    <link rel="preload" href="{{ asset('fonts/nunito-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/jetbrains-mono-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <script src="{{ asset('js/app.js') }}" defer></script>
+</head>
+<body>
+{% block shell %}
+    <div class="app{{ rail == 'narrow' ? ' rail-narrow' : (rail == 'wide' ? ' rail-wide' : '') }}">
+        {# Below 700px the rail leaves the flow and becomes a drawer. The
+           backdrop is what a tap outside it lands on. #}
+        <div class="drawer-backdrop" data-drawer-close></div>
+
+        <div class="rail-region">
+            <aside class="rail" id="rail">
+                <a class="rail-brand" href="{{ path('app_dashboard') }}">
+                    <img src="{{ asset('favicon.svg') }}" alt="" width="24" height="24">
+                    <span class="rail-label">{{ 'app.name'|trans }}</span>
+                </a>
+
+                <button type="button" class="drawer-close" data-drawer-close>
+                    {{ icon.close(18) }}
+                    <span class="visually-hidden">{{ 'app.nav.close_menu'|trans }}</span>
+                </button>
+
+                <nav class="rail-nav" aria-label="{{ 'app.nav.label'|trans }}">
+                    {% include '_partials/nav_links.html.twig' %}
+                </nav>
+
+                {# The reason the rail earns its width: a blocked ticket is
+                   visible from any screen, not only from the dashboard. #}
+                {% set recent = nav_projects() %}
+                {% if recent is not empty %}
+                    <div class="rail-section">
+                        <p class="rail-section-title">{{ 'app.nav.recent'|trans }}</p>
+                        <div class="rail-pins">
+                            {% for row in recent %}
+                                <a class="rail-pin" href="{{ path('app_project_show', {key: row.project.key}) }}"
+                                   title="{{ row.project.name }}">
+                                    <span class="rail-pin-dot{{ row.blockedTickets ? ' is-blocked' : '' }}"></span>
+                                    <span class="rail-pin-name">{{ row.project.name }}</span>
+                                    <span class="rail-pin-count">{{ row.activeTickets }}</span>
+                                    <span class="visually-hidden">
+                                        {{ 'dashboard.summary.active'|trans({'%count%': row.activeTickets}) }}{% if row.blockedTickets %},
+                                            {{ 'dashboard.summary.blocked'|trans({'%count%': row.blockedTickets}) }}
+                                        {% endif %}
+                                    </span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <form class="rail-foot" method="post" action="{{ path('app_logout') }}">
+                    <span class="rail-user">{{ app.user ? app.user.userIdentifier : '' }}</span>
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                    <button type="submit" class="rail-icon-button" title="{{ 'app.nav.logout'|trans }}">
+                        {{ icon.logout(16) }}
+                        <span class="visually-hidden">{{ 'app.nav.logout'|trans }}</span>
+                    </button>
+                </form>
+            </aside>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                {# A toggle has to post the state the reader is actually looking
+                   at. With no cookie stored, that state is the stylesheet's
+                   call — the viewport for the rail, the system preference for
+                   the theme — and the server cannot know either. So both
+                   buttons ship and CSS reveals the one that matches. No script,
+                   and no first click that does nothing.
+
+                   Both rail buttons ship in every state, not only in the
+                   undecided one: with scripting on, the fold is applied here
+                   and the page is never rebuilt, so the button that was hidden
+                   a moment ago has to already be in the document. #}
+                <form method="post" action="{{ path('app_preference_rail') }}" data-rail-form>
+                    <input type="hidden" name="_token" value="{{ csrf_token('rail') }}">
+                    <input type="hidden" name="from" value="{{ app.request.requestUri }}">
+
+                    <button type="submit" name="value" value="narrow"
+                            class="icon-button rail-toggle rail-toggle-collapse"
+                            aria-controls="rail" title="{{ 'app.rail.collapse'|trans }}">
+                        {{ icon.rail_collapse(18) }}
+                        <span class="visually-hidden">{{ 'app.rail.collapse'|trans }}</span>
+                    </button>
+                    <button type="submit" name="value" value="wide"
+                            class="icon-button rail-toggle rail-toggle-expand"
+                            aria-controls="rail" title="{{ 'app.rail.expand'|trans }}">
+                        {{ icon.rail_expand(18) }}
+                        <span class="visually-hidden">{{ 'app.rail.expand'|trans }}</span>
+                    </button>
+                </form>
+
+                <nav class="crumbs" aria-label="{{ 'app.nav.breadcrumb'|trans }}">
+                    {% block crumbs %}{% endblock %}
+                </nav>
+
+                <form method="post" action="{{ path('app_preference_theme') }}" data-theme-form>
+                    <input type="hidden" name="_token" value="{{ csrf_token('theme') }}">
+                    <input type="hidden" name="from" value="{{ app.request.requestUri }}">
+
+                    {# The icon says which theme is on, the label says what the
+                       press does. The two shutters close over it while the
+                       swap happens underneath, so the icon is never caught
+                       changing. #}
+                    <button type="submit" name="value" value="dark"
+                            class="icon-button icon-button-outlined theme-toggle theme-to-dark"
+                            title="{{ 'app.theme.to_dark'|trans }}">
+                        {{ icon.sun(16) }}
+                        <span class="visually-hidden">{{ 'app.theme.to_dark'|trans }}</span>
+                        <span class="theme-shutter theme-shutter-left"></span>
+                        <span class="theme-shutter theme-shutter-right"></span>
+                    </button>
+                    <button type="submit" name="value" value="light"
+                            class="icon-button icon-button-outlined theme-toggle theme-to-light"
+                            title="{{ 'app.theme.to_light'|trans }}">
+                        {{ icon.moon(16) }}
+                        <span class="visually-hidden">{{ 'app.theme.to_light'|trans }}</span>
+                        <span class="theme-shutter theme-shutter-left"></span>
+                        <span class="theme-shutter theme-shutter-right"></span>
+                    </button>
+                </form>
+            </div>
+
+            {% include '_partials/flashes.html.twig' %}
+
+            <div class="page">
+                {% block body %}{% endblock %}
+            </div>
+        </div>
+
+        {# Below 700px only. The destinations sit under the thumb, and what the
+           rail carries besides them — the pinned projects, the session — is one
+           tap away in the drawer rather than dropped. #}
+        <div class="tabbar">
+            <nav class="tabbar-nav" aria-label="{{ 'app.nav.label'|trans }}">
+                {% include '_partials/nav_links.html.twig' %}
+            </nav>
+            <button type="button" class="tabbar-menu" aria-controls="rail" aria-expanded="false" data-drawer-open>
+                {{ icon.menu(20) }}
+                <span class="rail-label">{{ 'app.nav.menu'|trans }}</span>
+            </button>
+        </div>
+    </div>
+{% endblock %}
+</body>
+</html>

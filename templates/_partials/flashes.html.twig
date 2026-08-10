@@ -1,0 +1,11 @@
+{# A strip under the top bar, not a card inside the page: the message belongs to
+   the moment rather than to the content, and it must not push the list down by
+   a card's height every time an action succeeds.
+
+   The plain token is not here — it is not a passing notice but the one thing
+   the reader came for, so it is shown in the page itself. #}
+{% for label, messages in app.flashes(['success', 'error']) %}
+    {% for message in messages %}
+        <p class="flash flash-{{ label }}" role="status">{{ message|trans }}</p>
+    {% endfor %}
+{% endfor %}

@@ -1,0 +1,11 @@
+{# Who did this. Three signals, so the distinction holds without colour: the
+   fill says human or agent — a solid chip for an agent, an outlined one for a
+   human — the hue tells the agents apart, and the monogram tells them apart
+   again for an eye that reads neither. #}
+<span class="actor actor-{{ actor.agent ? 'agent' : 'human' }}">
+    <span class="actor-chip" style="--actor-color: {{ actor.color }}">{{ actor.monogram }}</span>
+    <span class="actor-name">{{ actor.displayName }}</span>
+    <span class="visually-hidden">
+        {{ (actor.agent ? 'actor.kind.agent' : 'actor.kind.human')|trans }}
+    </span>
+</span>

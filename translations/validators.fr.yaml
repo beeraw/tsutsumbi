@@ -1,0 +1,61 @@
+project:
+    path:
+        not_blank: "Le chemin du projet est obligatoire."
+        too_long: "Le chemin du projet ne peut pas dépasser {{ limit }} caractères."
+    name:
+        too_long: "Le nom du projet ne peut pas dépasser {{ limit }} caractères."
+
+ticket:
+    title:
+        not_blank: "Le titre est obligatoire."
+        too_long: "Le titre ne peut pas dépasser {{ limit }} caractères."
+    type:
+        not_blank: "Le type est obligatoire."
+        invalid: "Le type est invalide."
+    status:
+        invalid: "Le statut est invalide."
+    resolution:
+        invalid: "La résolution est invalide."
+    priority:
+        invalid: "La priorité est invalide."
+    updated_since:
+        invalid: "La date doit être au format ISO 8601."
+    # Refusals raised by the domain itself, rendered as form errors.
+    state:
+        resolution_required: "Un ticket terminé doit porter une résolution."
+        resolution_forbidden: "Une résolution ne peut être posée que sur un ticket terminé."
+        note_required: "Passer en bloqué exige un commentaire expliquant la cause."
+
+comment:
+    body:
+        not_blank: "Le commentaire ne peut pas être vide."
+        too_long: "Le commentaire ne peut pas dépasser {{ limit }} caractères."
+
+api_token:
+    label:
+        not_blank: "Le libellé est obligatoire."
+        too_long: "Le libellé ne peut pas dépasser {{ limit }} caractères."
+    agent_slug:
+        not_blank: "L'agent est obligatoire."
+        too_long: "Le slug de l'agent ne peut pas dépasser {{ limit }} caractères."
+        invalid: "Le slug doit être en minuscules, chiffres et tirets, par exemple claude-code."
+    scopes:
+        not_empty: "Accordez au moins une portée."
+    expires_at:
+        past: "La date d'expiration doit être dans le futur."
+
+pagination:
+    page:
+        invalid: "Le numéro de page doit être supérieur à zéro."
+    per_page:
+        invalid: "Le nombre d'éléments par page doit être supérieur à zéro."
+        too_large: "Le nombre d'éléments par page ne peut pas dépasser {{ compared_value }}."
+
+attachment:
+    no_file: "Aucun fichier n'a été envoyé."
+    missing_reason: "Une pièce jointe doit être accompagnée de la raison qui la justifie."
+    unsupported_media_type: "Le type de fichier %type% n'est pas accepté."
+    upload_too_large: "Le fichier dépasse %limit% avant compression."
+    too_large_after_compression: "Le fichier dépasse encore %limit% après compression."
+    ticket_budget_exhausted: "Ce ticket a atteint son quota de %limit% de pièces jointes."
+    unreadable_image: "Le fichier se présente comme une image mais ne peut pas être lu comme telle."

@@ -1,0 +1,19 @@
+api:
+    error:
+        unauthorized: "Authentication required"
+        forbidden: "Access denied"
+        not_found: "Resource not found"
+        malformed_request: "Malformed request"
+        validation_failed: "The submitted data is invalid"
+        invalid_ticket_state: "Invalid ticket state"
+        invalid_project_path: "Invalid project path"
+        attachment_rejected: "Attachment refused"
+        rate_limited: "Too many requests"
+        internal: "Internal error"
+        token:
+            missing: "No token was presented"
+            scheme: "The token must be presented with the Bearer scheme"
+            malformed: "The token format is invalid"
+            invalid: "The token is unknown or incorrect"
+            revoked: "The token has been revoked"
+            expired: "The token has expired"

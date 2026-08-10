@@ -1,0 +1,6 @@
+{# Status and resolution always travel together: a closed ticket is only legible
+   once you know how it ended. #}
+<span class="badge badge-{{ ticket.status.value }}">{{ ticket.status.translationKey|trans }}</span>
+{% if ticket.resolution %}
+    <span class="badge badge-plain">{{ ticket.resolution.translationKey|trans }}</span>
+{% endif %}

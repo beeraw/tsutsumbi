@@ -1,0 +1,251 @@
+app:
+    name: "tsutsumbi"
+    nav:
+        label: "Main navigation"
+        breadcrumb: "Breadcrumb"
+        projects: "Projects"
+        tokens: "Tokens"
+        recent: "Recent activity"
+        logout: "Sign out"
+        menu: "Menu"
+        close_menu: "Close the menu"
+    rail:
+        collapse: "Collapse the rail"
+        expand: "Expand the rail"
+    theme:
+        to_dark: "Switch to the dark theme"
+        to_light: "Switch to the light theme"
+
+security:
+    login:
+        title: "Sign in"
+        email: "Email address"
+        password: "Password"
+        remember_me: "Stay signed in"
+        submit: "Sign in"
+        note: "Private instance. Agents authenticate with an API token."
+
+dashboard:
+    title: "Projects"
+    subtitle: "sorted by decreasing activity"
+    summary:
+        projects: "{0}no project|{1}1 project|]1,Inf[ %count% projects"
+        active: "{0}no open ticket|{1}1 open ticket|]1,Inf[ %count% open tickets"
+        blocked: "{0}no blocked ticket|{1}1 blocked ticket|]1,Inf[ %count% blocked tickets"
+    legend: "A red edge in the gutter marks a project carrying at least one blocked ticket. Archived projects stay in the list, set back."
+    empty:
+        title: "No project tracked."
+        body: "Projects appear on their own: the first agent to open a ticket from a repository creates the matching project. Nothing to do here."
+    show_archived: "Show archived"
+    hide_archived: "Hide archived"
+
+actor:
+    kind:
+        human: "human"
+        agent: "agent"
+
+project:
+    archived: "Archived"
+    column:
+        key: "Key"
+        name: "Name"
+        path: "Path"
+        active_tickets: "Open"
+        blocked_tickets: "Blocked"
+        last_activity: "Last activity"
+    action:
+        archive: "Archive the project"
+        unarchive: "Unarchive the project"
+    flash:
+        archived: "Project archived. Nothing is lost: it stays readable."
+        unarchived: "Project unarchived."
+
+ticket:
+    status:
+        todo: "Todo"
+        in_progress: "In progress"
+        blocked: "Blocked"
+        done: "Done"
+    resolution:
+        fixed: "Fixed"
+        wont_do: "Won't do"
+        abandoned: "Abandoned"
+        duplicate: "Duplicate"
+        obsolete: "Obsolete"
+    type:
+        feature: "Feature"
+        bug: "Bug fix"
+        chore: "Chore"
+        refactor: "Refactor"
+        docs: "Documentation"
+        infra: "Infrastructure"
+    # Abbreviations for the "Type" column of the list, too narrow for the full
+    # labels. Used nowhere else.
+    type_short:
+        feature: "Feat."
+        bug: "Bug"
+        chore: "Chore"
+        refactor: "Refac."
+        docs: "Docs"
+        infra: "Infra"
+    priority:
+        low: "Low"
+        normal: "Normal"
+        high: "High"
+    field:
+        title: "Title"
+        description: "Description"
+        type: "Type"
+        status: "Status"
+        resolution: "Resolution"
+        priority: "Priority"
+    column:
+        key: "Key"
+        title: "Title"
+        type: "Type"
+        status: "Status"
+        priority: "Priority"
+        created_by: "Opened by"
+        created_at: "Opened on"
+        started_at: "Started on"
+        closed_at: "Closed on"
+        updated_at: "Updated"
+    filter:
+        legend: "Filters"
+        search: "Search"
+        search_placeholder: "Title, description, comments…"
+        search_help: "Comment bodies are indexed."
+        status: "Status"
+        type: "Type"
+        resolution: "Resolution"
+        resolution_help: "Available with closed tickets."
+        any: "All"
+        show_closed: "Include closed tickets"
+        submit: "Filter"
+        reset: "Reset"
+        close: "Close"
+        result_count: "{0}no ticket|{1}1 ticket|]1,Inf[ %count% tickets"
+    # Read aloud behind the column heading the sort applies to.
+    sort:
+        asc: "sorted in ascending order"
+        desc: "sorted in descending order"
+    list:
+        empty:
+            title: "No ticket matches."
+            body: "Widen the search, or let the next agent working in this repository open one."
+    section:
+        description: "Description"
+        timeline: "Timeline"
+    no_description: "No description."
+    key:
+        copied: "Key copied."
+    timeline:
+        empty: "Nothing has happened on this ticket yet."
+        count: "{0}no entry|{1}1 entry|]1,Inf[ %count% entries"
+        rewritten: "rewritten"
+        empty_value: "empty"
+    action:
+        edit: "Edit the ticket"
+        save: "Save"
+        copy_key: "Copy the key %key%"
+        change_status: "Change the status"
+        reopen_or_change: "Reopen or change the resolution"
+        apply: "Apply"
+    form:
+        title:
+            label: "Title"
+        description:
+            label: "Description"
+            help: "Markdown accepted."
+            placeholder: "The need, the constraint, what is out of scope."
+        type:
+            label: "Type"
+        priority:
+            label: "Priority"
+        status:
+            label: "Status"
+        resolution:
+            label: "Resolution"
+            placeholder: "None"
+            help: "Required to close, forbidden otherwise."
+        note:
+            label: "Comment"
+            help: "Required to move to blocked. A silent blockage is the worst state of all."
+            placeholder: "What is blocking, or what was decided."
+    flash:
+        updated: "Ticket updated."
+        status_changed: "Status updated."
+
+attachment:
+    section:
+        title: "Attachments"
+    empty: "None. Agents attach files rarely."
+    comment: "Attachment “%name%”: %reason%"
+
+comment:
+    section:
+        add: "Add a comment"
+    action:
+        add: "Comment"
+    form:
+        body:
+            label: "Comment"
+            help: "Markdown accepted."
+            placeholder: "A non-trivial design decision deserves to be noted here."
+    flash:
+        added: "Comment added."
+
+api_token:
+    title: "API tokens"
+    subtitle: "Agents authenticate with these tokens. Creating and revoking happen here and nowhere else."
+    empty:
+        title: "No token."
+        body: "Without a token, no agent can write into tsutsumbi."
+    never_used: "Never used"
+    scope:
+        projects_write: "Creating and resolving projects"
+        tickets_write: "Creating and updating tickets"
+        comments_write: "Adding comments"
+        attachments_write: "Adding attachments"
+    column:
+        selector: "Selector"
+        label: "Label"
+        agent: "Agent"
+        scopes: "Scopes"
+        last_used: "Last used"
+    state:
+        revoked: "Revoked"
+        expired: "Expired"
+        expires: "Expires on %date%"
+    section:
+        create: "New token"
+    action:
+        create: "Create the token"
+        revoke: "Revoke"
+    confirm:
+        revoke: "Revoke this token? The agent using it will be refused from its very next request."
+    reveal:
+        warning: "Copy this token now. It will never be shown again."
+        stored: "Only the selector is kept server-side; the token itself exists nowhere."
+    flash:
+        created: "Token created."
+        revoked: "Token revoked."
+    form:
+        label:
+            label: "Label"
+            help: "So you can tell it apart later."
+            placeholder: "laptop / claude-code"
+        agent_slug:
+            label: "Agent"
+            help: "Created automatically if it does not exist yet."
+        scopes:
+            label: "Scopes"
+            help: "Grant the minimum needed."
+        expires_at:
+            label: "Expiry"
+            help: "Optional. With no date, the token stays valid until revoked."
+
+pagination:
+    summary: "Page %page% of %pages%, %total% tickets"
+    previous: "Previous"
+    next: "Next"

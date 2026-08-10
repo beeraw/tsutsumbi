@@ -1,0 +1,29 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+
+    # The stylesheet and the script are served straight from public/, with no
+    # build step to name them. Their URL carries a hash of their content
+    # instead, so a deployment invalidates exactly what changed and nobody has
+    # to empty a cache by hand.
+    assets:
+        version_strategy: App\Asset\ContentHashVersionStrategy
+
+    # Note that the session will be started ONLY if you read or write from it.
+    session:
+        cookie_secure: true
+        cookie_httponly: true
+        cookie_samesite: lax
+
+    rate_limiter:
+        # Per-token throttling of the machine-facing API.
+        api:
+            policy: sliding_window
+            limit: '%env(int:API_RATE_LIMIT)%'
+            interval: '1 minute'
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

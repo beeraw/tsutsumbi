@@ -1,0 +1,19 @@
+api:
+    error:
+        unauthorized: "Autenticación requerida"
+        forbidden: "Acceso denegado"
+        not_found: "Recurso no encontrado"
+        malformed_request: "Petición mal formada"
+        validation_failed: "Los datos enviados no son válidos"
+        invalid_ticket_state: "Estado de ticket no válido"
+        invalid_project_path: "Ruta de proyecto no válida"
+        attachment_rejected: "Archivo adjunto rechazado"
+        rate_limited: "Demasiadas peticiones"
+        internal: "Error interno"
+        token:
+            missing: "No se ha presentado ningún token"
+            scheme: "El token debe presentarse con el esquema Bearer"
+            malformed: "El formato del token no es válido"
+            invalid: "El token es desconocido o incorrecto"
+            revoked: "El token ha sido revocado"
+            expired: "El token ha caducado"

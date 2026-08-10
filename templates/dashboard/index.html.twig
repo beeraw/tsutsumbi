@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'dashboard.title'|trans }} · {{ 'app.name'|trans }}{% endblock %}
+
+{% block crumbs %}
+    <span class="crumbs-current">{{ 'dashboard.title'|trans }}</span>
+{% endblock %}
+
+{% block body %}
+    {% set blockedTotal = rows|reduce((total, row) => total + row.blockedTickets, 0) %}
+
+    <div class="page-head">
+        <div class="page-head-main">
+            <h1>{{ 'dashboard.title'|trans }}</h1>
+            <p>
+                {{ 'dashboard.summary.projects'|trans({'%count%': rows|length}) }}
+                {%- if blockedTotal %} · {{ 'dashboard.summary.blocked'|trans({'%count%': blockedTotal}) }}{% endif %}
+                · {{ 'dashboard.subtitle'|trans }}
+            </p>
+        </div>
+
+        <div class="page-head-actions">
+            <a class="button button-quiet"
+               href="{{ path('app_dashboard', withArchived ? {} : {archived: 1}) }}">
+                {{ (withArchived ? 'dashboard.hide_archived' : 'dashboard.show_archived')|trans }}
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-projects">
+        {% if rows is empty %}
+            <div class="grid-empty">
+                <p>{{ 'dashboard.empty.title'|trans }}</p>
+                <p>{{ 'dashboard.empty.body'|trans }}</p>
+            </div>
+        {% else %}
+            <div class="grid-head" aria-hidden="true">
+                <span>{{ 'project.column.key'|trans }}</span>
+                <span>{{ 'project.column.name'|trans }}</span>
+                <span>{{ 'project.column.path'|trans }}</span>
+                <span class="numeric">{{ 'project.column.active_tickets'|trans }}</span>
+                <span class="numeric">{{ 'project.column.blocked_tickets'|trans }}</span>
+                <span class="numeric">{{ 'project.column.last_activity'|trans }}</span>
+            </div>
+
+            {% for row in rows %}
+                {% set project = row.project %}
+                {# The whole row is the link. Thirty rows scanned quickly means
+                   thirty targets the size of a row, not the size of a key. #}
+                <a class="grid-row{{ row.blockedTickets ? ' is-blocked' : '' }}"
+                   href="{{ path('app_project_show', {key: project.key}) }}">
+                    <span class="c-key">{{ project.key }}</span>
+                    <span class="c-name">
+                        {{ project.name }}
+                        {% if project.archived %}
+                            <span class="badge badge-archived">{{ 'project.archived'|trans }}</span>
+                        {% endif %}
+                    </span>
+                    <span class="c-path" title="{{ project.path }}">{{ project.path }}</span>
+                    <span class="c-active{{ row.activeTickets ? '' : ' is-zero' }}">
+                        {{ row.activeTickets }}
+                        <span class="visually-hidden">{{ 'project.column.active_tickets'|trans }}</span>
+                    </span>
+                    <span class="c-blocked{{ row.blockedTickets ? '' : ' is-zero' }}">
+                        {{ row.blockedTickets }}
+                        <span class="visually-hidden">{{ 'project.column.blocked_tickets'|trans }}</span>
+                    </span>
+                    <span class="c-when">
+                        <time datetime="{{ row.lastActivityAt|date('c') }}">
+                            {{ row.lastActivityAt|format_datetime('medium', 'short') }}
+                        </time>
+                    </span>
+                </a>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    {% if rows is not empty %}
+        <p class="grid-note">{{ 'dashboard.legend'|trans }}</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,58 @@
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
+
+###> phpstan/phpstan ###
+/phpstan.neon
+###< phpstan/phpstan ###
+
+.DS_Store
+
+###> deployment ###
+# The deployment script lives on the server and nowhere else. It names the
+# host's own layout — paths, service names — which has no reason to be readable
+# by anyone who clones this. See the README for what it has to do.
+/bin/deploy
+###< deployment ###
+
+###> design ###
+# Mockup archives handed over by the design phase: heavy, superseded by what
+# shipped in public/, and of no use to a reader of the repository.
+/design/*.zip
+###< design ###
+
+###> ide ###
+/.idea/
+/.vscode/
+*.iml
+###< ide ###
+
+###> tsutsumbi-mcp ###
+/mcp/node_modules/
+# Yarn 4 with nodeLinker node-modules: only the install state is local, the lock
+# file stays under version control.
+/mcp/.yarn/*
+!/mcp/.yarn/patches
+!/mcp/.yarn/plugins
+!/mcp/.yarn/releases
+!/mcp/.yarn/versions
+/mcp/.pnp.*
+/mcp/yarn-error.log
+###< tsutsumbi-mcp ###
