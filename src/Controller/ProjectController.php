@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Domain\ProjectEditor;
 use App\Entity\Project;
 use App\Enum\TicketResolution;
 use App\Enum\TicketStatus;
 use App\Enum\TicketType;
+use App\Exception\InvalidProjectPathException;
+use App\Exception\ProjectConflictException;
+use App\Form\Model\ProjectEditData;
+use App\Form\ProjectEditForm;
 use App\Repository\ProjectRepository;
 use App\Repository\TicketRepository;
 use App\Search\FullTextQuery;
@@ -16,9 +21,12 @@ use App\Search\TicketCriteria;
 use App\Search\TicketSort;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
 use function sprintf;
@@ -31,6 +39,8 @@ final class ProjectController extends AbstractController
     public function __construct(
         private readonly ProjectRepository $projects,
         private readonly TicketRepository $tickets,
+        private readonly ProjectEditor $editor,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -57,6 +67,40 @@ final class ProjectController extends AbstractController
             'statuses' => TicketStatus::cases(),
             'resolutions' => TicketResolution::cases(),
         ]);
+    }
+
+    #[Route('/{key}/edit', name: 'app_project_edit', requirements: ['key' => self::KEY_PATTERN], methods: ['GET', 'POST'])]
+    public function edit(string $key, Request $request): Response
+    {
+        $project = $this->requireProject($key);
+        $form = $this->editForm($project);
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            return $this->render('project/edit.html.twig', ['project' => $project, 'form' => $form]);
+        }
+
+        try {
+            $this->editor->apply($project, $form->getData()->toChange());
+        } catch (ProjectConflictException $exception) {
+            // The domain owns the rule; the form only reports what it said, on
+            // the field that caused it.
+            $form->get($exception->getField())->addError(new FormError(
+                $this->translator->trans($exception->getTranslationKey(), [], 'validators'),
+            ));
+
+            return $this->render('project/edit.html.twig', ['project' => $project, 'form' => $form]);
+        } catch (InvalidProjectPathException) {
+            $form->get('path')->addError(new FormError(
+                $this->translator->trans('project.path.invalid', [], 'validators'),
+            ));
+
+            return $this->render('project/edit.html.twig', ['project' => $project, 'form' => $form]);
+        }
+
+        $this->addFlash('success', 'project.flash.updated');
+
+        return $this->redirectToRoute('app_project_show', ['key' => $project->getKey()]);
     }
 
     #[Route('/{key}/archive', name: 'app_project_archive', requirements: ['key' => self::KEY_PATTERN], methods: ['POST'])]
@@ -116,6 +160,16 @@ final class ProjectController extends AbstractController
             sort: $sort,
             direction: $direction,
         );
+    }
+
+    /**
+     * @return FormInterface<ProjectEditData>
+     */
+    private function editForm(Project $project): FormInterface
+    {
+        return $this->createForm(ProjectEditForm::class, ProjectEditData::fromProject($project), [
+            'action' => $this->generateUrl('app_project_edit', ['key' => $project->getKey()]),
+        ]);
     }
 
     private function requireProject(string $key): Project

@@ -56,9 +56,29 @@ project:
     action:
         archive: "Archiver le projet"
         unarchive: "Désarchiver le projet"
+        edit: "Modifier le projet"
+        back: "Retour au projet"
+        submit: "Enregistrer"
     flash:
         archived: "Projet archivé. Rien n'est perdu : il reste consultable."
         unarchived: "Projet désarchivé."
+        updated: "Projet mis à jour."
+    edit:
+        title: "Modifier le projet"
+        subtitle: "Le nom et la description se lisent ici ; le chemin et la clé sont l'identité du projet, à changer en connaissance de cause."
+    form:
+        name:
+            label: "Nom"
+        description:
+            label: "Description"
+            help: "Markdown accepté."
+            placeholder: "À quoi sert ce projet, et ce qu'il faut savoir avant d'y toucher."
+        path:
+            label: "Chemin"
+            help: "Chemin absolu du dossier. C'est par lui qu'un agent retrouve le projet au démarrage d'une session : le changer sans déplacer le dossier fera créer un second projet au prochain démarrage."
+        key:
+            label: "Clé"
+            help: "Dix caractères au plus, lettres et chiffres. Les tickets en tirent leur identifiant : passer de TSUTSUMBI à TSU renomme TSUTSUMBI-42 en TSU-42, et l'ancienne référence, écrite dans un commit ou un message, ne mènera plus nulle part."
 
 ticket:
     status:

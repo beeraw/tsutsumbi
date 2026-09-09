@@ -56,9 +56,29 @@ project:
     action:
         archive: "Projekt archivieren"
         unarchive: "Projekt wiederherstellen"
+        edit: "Projekt bearbeiten"
+        back: "Zurück zum Projekt"
+        submit: "Speichern"
     flash:
         archived: "Projekt archiviert. Nichts geht verloren: Es bleibt einsehbar."
         unarchived: "Projekt wiederhergestellt."
+        updated: "Projekt aktualisiert."
+    edit:
+        title: "Projekt bearbeiten"
+        subtitle: "Name und Beschreibung werden hier gelesen; Pfad und Schlüssel sind die Identität des Projekts und sollten bewusst geändert werden."
+    form:
+        name:
+            label: "Name"
+        description:
+            label: "Beschreibung"
+            help: "Markdown erlaubt."
+            placeholder: "Wozu dieses Projekt dient und was man wissen sollte, bevor man es anfasst."
+        path:
+            label: "Pfad"
+            help: "Absoluter Pfad des Verzeichnisses. Darüber findet ein Agent das Projekt zu Beginn einer Sitzung wieder: Wird er geändert, ohne das Verzeichnis zu verschieben, entsteht beim nächsten Start ein zweites Projekt."
+        key:
+            label: "Schlüssel"
+            help: "Höchstens zehn Zeichen, Buchstaben und Ziffern. Tickets leiten ihre Kennung daraus ab: Von TSUTSUMBI zu TSU wird aus TSUTSUMBI-42 die Nummer TSU-42, und die alte Referenz in einem Commit oder einer Nachricht führt ins Leere."
 
 ticket:
     status:

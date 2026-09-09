@@ -851,6 +851,25 @@ body.is-locked {
     color: var(--ink-faint);
 }
 
+/*
+ * A project description, when there is one. Same measure as the path above it,
+ * and no more prominence: it is context for the list below, not the heading.
+ */
+.page-head-description {
+    margin: var(--space-2) 0 0;
+    max-width: 40rem;
+    font-size: var(--text-small);
+    color: var(--ink-soft);
+}
+
+.page-head-description > :first-child {
+    margin-top: 0;
+}
+
+.page-head-description > :last-child {
+    margin-bottom: 0;
+}
+
 /* ------------------------------------------------------------------- grids */
 
 /*
@@ -1842,6 +1861,27 @@ fieldset {
 
 .form-grid > .field:first-child {
     margin-top: 0;
+}
+
+/*
+ * A form read once in a while and filled in top to bottom, rather than the
+ * dense two-column card of the token screen. The measure is the one the help
+ * texts want: a warning nobody reads because the line is 90 characters long is
+ * a warning that was not given.
+ */
+.form-panel-narrow {
+    max-width: 44rem;
+}
+
+.form-panel-narrow > form > .field:first-of-type {
+    margin-top: 0;
+}
+
+.form-split {
+    height: 0;
+    margin: var(--space-5) 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
 }
 
 .meta-list {

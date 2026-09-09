@@ -24,6 +24,12 @@ class Project
 {
     public const int KEY_MAX_LENGTH = 10;
 
+    /**
+     * The shape of a project key, shared by the routes that match one, the
+     * payloads that carry one and the forms that ask for one.
+     */
+    public const string KEY_PATTERN = '[A-Z0-9]{1,'.self::KEY_MAX_LENGTH.'}';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -78,6 +84,16 @@ class Project
     public function getKey(): string
     {
         return $this->key;
+    }
+
+    /**
+     * Renaming a key rewrites the public identifier of every ticket the
+     * project carries: TSUTSUMBI-42 becomes TSU-42, and the old form stops
+     * resolving. Nothing here prevents it — the callers warn instead.
+     */
+    public function setKey(string $key): void
+    {
+        $this->key = $key;
     }
 
     public function getName(): string

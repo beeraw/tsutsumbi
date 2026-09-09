@@ -56,9 +56,29 @@ project:
     action:
         archive: "Archive the project"
         unarchive: "Unarchive the project"
+        edit: "Edit project"
+        back: "Back to the project"
+        submit: "Save"
     flash:
         archived: "Project archived. Nothing is lost: it stays readable."
         unarchived: "Project unarchived."
+        updated: "Project updated."
+    edit:
+        title: "Edit project"
+        subtitle: "Name and description are read here; the path and the key are the project's identity, to be changed knowingly."
+    form:
+        name:
+            label: "Name"
+        description:
+            label: "Description"
+            help: "Markdown accepted."
+            placeholder: "What this project is for, and what to know before touching it."
+        path:
+            label: "Path"
+            help: "Absolute path of the directory. It is how an agent finds the project again at the start of a session: changing it without moving the directory will have a second project created on the next start."
+        key:
+            label: "Key"
+            help: "Ten characters at most, letters and digits. Tickets take their identifier from it: going from TSUTSUMBI to TSU renames TSUTSUMBI-42 into TSU-42, and the old reference, written in a commit or a message, leads nowhere any more."
 
 ticket:
     status:

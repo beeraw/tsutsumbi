@@ -7,15 +7,18 @@ namespace App\Controller\Api;
 use App\Api\ProjectPresenter;
 use App\Api\TicketPresenter;
 use App\Domain\ActorProvider;
+use App\Domain\ProjectEditor;
 use App\Domain\ProjectResolver;
 use App\Domain\TicketFactory;
 use App\Dto\CreateTicketRequest;
 use App\Dto\ResolveProjectRequest;
+use App\Dto\UpdateProjectRequest;
 use App\Entity\Project;
 use App\Repository\ProjectRepository;
 use App\Repository\TicketRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
@@ -86,6 +89,35 @@ final class ProjectApiController extends AbstractController
                 $this->tickets->findActiveByProject($project),
             ),
         ]);
+    }
+
+    /**
+     * What resolve() deliberately will not do. Resolution is idempotent by
+     * contract — an agent replays it at every session start — so a change of
+     * name, path or key is asked for here, by key, and only ever on purpose.
+     */
+    #[Route('/{key}', name: 'api_projects_update', requirements: ['key' => self::KEY_PATTERN], methods: ['PATCH'])]
+    #[IsGranted('projects:write')]
+    public function update(
+        string $key,
+        Request $request,
+        #[MapRequestPayload]
+        UpdateProjectRequest $payload,
+        ProjectEditor $editor,
+    ): JsonResponse {
+        $project = $this->requireProject($key);
+
+        // The payload keys, not the DTO's nulls: {"description": null} clears
+        // the description, while omitting the key leaves it untouched.
+        /** @var list<string> $providedFields */
+        $providedFields = array_map(strval(...), array_keys($request->getPayload()->all()));
+
+        $editor->apply($project, $payload->toChange($providedFields));
+
+        return $this->json($this->projectPresenter->summary(
+            $project,
+            $this->tickets->countActiveByProject($project),
+        ));
     }
 
     #[Route('/{key}/tickets', name: 'api_projects_create_ticket', requirements: ['key' => self::KEY_PATTERN], methods: ['POST'])]

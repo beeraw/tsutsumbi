@@ -2,8 +2,16 @@ project:
     path:
         not_blank: "The project path is required."
         too_long: "The project path cannot exceed {{ limit }} characters."
+        invalid: "The path must be absolute, with no “..” climbing above the root."
     name:
+        not_blank: "The project name is required."
         too_long: "The project name cannot exceed {{ limit }} characters."
+    key:
+        invalid: "The project key must be at most 10 letters and digits."
+    # Refusals raised by the domain itself, rendered as form errors.
+    conflict:
+        path_taken: "Another project is already tracked at this path."
+        key_taken: "Another project already holds this key."
 
 ticket:
     title:

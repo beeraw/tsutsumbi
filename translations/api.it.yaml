@@ -7,6 +7,7 @@ api:
         validation_failed: "I dati inviati non sono validi"
         invalid_ticket_state: "Stato del ticket non valido"
         invalid_project_path: "Percorso del progetto non valido"
+        project_conflict: "Conflitto con un altro progetto"
         attachment_rejected: "Allegato rifiutato"
         rate_limited: "Troppe richieste"
         internal: "Errore interno"

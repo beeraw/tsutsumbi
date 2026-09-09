@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'project.edit.title'|trans }} · {{ project.key }} · {{ 'app.name'|trans }}{% endblock %}
+
+{% block crumbs %}
+    <a href="{{ path('app_dashboard') }}">{{ 'dashboard.title'|trans }}</a>
+    <span class="crumbs-sep">/</span>
+    <a href="{{ path('app_project_show', {key: project.key}) }}">{{ project.name }}</a>
+    <span class="crumbs-sep">/</span>
+    <span class="crumbs-current">{{ 'project.edit.title'|trans }}</span>
+{% endblock %}
+
+{% block body %}
+    <div class="page-head">
+        <div class="page-head-main">
+            <h1>{{ 'project.edit.title'|trans }}</h1>
+            <p>{{ 'project.edit.subtitle'|trans }}</p>
+        </div>
+
+        <div class="page-head-actions">
+            <a class="button button-quiet" href="{{ path('app_project_show', {key: project.key}) }}">
+                {{ 'project.action.back'|trans }}
+            </a>
+        </div>
+    </div>
+
+    {# One form, full width, no panel to unfold: this page has exactly one thing
+       to do, and it was reached on purpose. The two identity fields sit last
+       and carry their own warning — a reader who came to fix a name should not
+       have to walk past them. #}
+    <div class="panel form-panel form-panel-narrow">
+        {{ form_start(form) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.name) }}
+        {{ form_row(form.description) }}
+
+        {# The two identity fields, set apart from the two that cost nothing. #}
+        <hr class="form-split">
+        {{ form_row(form.path) }}
+        {{ form_row(form.key) }}
+        <div class="actions">
+            <button type="submit" class="button">{{ 'project.action.submit'|trans }}</button>
+            <a class="button button-quiet" href="{{ path('app_project_show', {key: project.key}) }}">
+                {{ 'project.action.back'|trans }}
+            </a>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

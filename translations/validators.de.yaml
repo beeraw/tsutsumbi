@@ -2,8 +2,16 @@ project:
     path:
         not_blank: "Der Projektpfad ist erforderlich."
         too_long: "Der Projektpfad darf {{ limit }} Zeichen nicht überschreiten."
+        invalid: "Der Pfad muss absolut sein, ohne „..“, das über die Wurzel hinausführt."
     name:
+        not_blank: "Der Projektname ist erforderlich."
         too_long: "Der Projektname darf {{ limit }} Zeichen nicht überschreiten."
+    key:
+        invalid: "Der Projektschlüssel darf höchstens 10 Buchstaben und Ziffern enthalten."
+    # Refusals raised by the domain itself, rendered as form errors.
+    conflict:
+        path_taken: "Unter diesem Pfad wird bereits ein anderes Projekt verfolgt."
+        key_taken: "Ein anderes Projekt trägt diesen Schlüssel bereits."
 
 ticket:
     title:

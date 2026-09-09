@@ -48,9 +48,15 @@
                 {% endif %}
             </div>
             <p class="page-path" title="{{ project.path }}">{{ project.path }}</p>
+            {% if project.description %}
+                <div class="page-head-description">{{ project.description|markdown }}</div>
+            {% endif %}
         </div>
 
         <div class="page-head-actions">
+            <a class="button button-quiet" href="{{ path('app_project_edit', {key: project.key}) }}">
+                {{ 'project.action.edit'|trans }}
+            </a>
             <form method="post" action="{{ path('app_project_archive', {key: project.key}) }}">
                 <input type="hidden" name="_token" value="{{ csrf_token('archive' ~ project.key) }}">
                 <button type="submit" class="button button-quiet">

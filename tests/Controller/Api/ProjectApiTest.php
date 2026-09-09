@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\Api;
 
+use App\Enum\ApiTokenScope;
 use App\Http\ProblemJsonResponseFactory;
 use App\Http\ProblemType;
 use App\Tests\ApiTestCase;
@@ -213,5 +214,206 @@ final class ProjectApiTest extends ApiTestCase
 
         self::assertSame('agent', $createdBy['type']);
         self::assertSame('claude-design', $createdBy['slug']);
+    }
+
+    public function testUpdateChangesTheNameAndTheDescription(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+
+        $this->request('PATCH', '/api/projects/'.$key, [
+            'name' => 'Maji ya Mayotte',
+            'description' => 'Water network.',
+        ], $token);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Maji ya Mayotte', $this->responsePayload()['name']);
+        self::assertSame('Water network.', $this->responsePayload()['description']);
+    }
+
+    public function testUpdateLeavesAloneWhatItWasNotAskedToChange(): void
+    {
+        $token = $this->createToken();
+        $path = $this->uniquePath('maji');
+
+        $this->request('POST', '/api/projects/resolve', ['path' => $path, 'name' => 'Maji'], $token);
+        $key = $this->responsePayload()['key'];
+
+        $this->request('PATCH', '/api/projects/'.$key, ['description' => 'Water network.'], $token);
+
+        self::assertSame('Maji', $this->responsePayload()['name']);
+        self::assertSame($path, $this->responsePayload()['path']);
+    }
+
+    /**
+     * A tool call cannot express a JSON null distinctly from an absent key on
+     * its own, so the bridge sends the null and the controller has to honour it.
+     */
+    public function testAnExplicitNullClearsTheDescription(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+
+        $this->request('PATCH', '/api/projects/'.$key, ['description' => 'Water network.'], $token);
+        $this->request('PATCH', '/api/projects/'.$key, ['description' => null], $token);
+
+        self::assertNull($this->responsePayload()['description']);
+    }
+
+    public function testUpdateNormalisesTheNewPath(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+        $moved = $this->uniquePath('maji-moved');
+
+        $this->request('PATCH', '/api/projects/'.$key, ['path' => $moved.'/'], $token);
+
+        self::assertSame($moved, $this->responsePayload()['path']);
+    }
+
+    /**
+     * Which is the whole point of moving one: the next session start has to find
+     * the project it just moved, not open a second one beside it.
+     */
+    public function testAMovedProjectIsWhatResolveFindsAtItsNewPath(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+        $moved = $this->uniquePath('maji-moved');
+
+        $this->request('PATCH', '/api/projects/'.$key, ['path' => $moved], $token);
+        $this->request('POST', '/api/projects/resolve', ['path' => $moved], $token);
+
+        self::assertFalse($this->responsePayload()['created']);
+        self::assertSame($key, $this->responsePayload()['key']);
+    }
+
+    public function testRenamingTheKeyRewritesTheTicketIdentifiers(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+
+        $this->request('POST', sprintf('/api/projects/%s/tickets', $key), [
+            'title' => 'CSV export of statements',
+            'type' => 'feature',
+        ], $token);
+        $ticket = $this->responsePayload()['key'];
+
+        $this->request('PATCH', '/api/projects/'.$key, ['key' => 'MJ'], $token);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('MJ', $this->responsePayload()['key']);
+
+        $this->request('GET', '/api/tickets/MJ-1', token: $token);
+        self::assertResponseIsSuccessful();
+
+        // And the identifier written down before the rename leads nowhere.
+        $this->request('GET', '/api/tickets/'.$ticket, token: $token);
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testAPathAnotherProjectHoldsIsRefused(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+        $taken = $this->uniquePath('harusi');
+
+        $this->request('POST', '/api/projects/resolve', ['path' => $taken], $token);
+        $this->request('PATCH', '/api/projects/'.$key, ['path' => $taken], $token);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        self::assertSame(ProblemType::PROJECT_CONFLICT, $this->responsePayload()['type']);
+    }
+
+    public function testAKeyAnotherProjectHoldsIsRefused(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+
+        $this->request('POST', '/api/projects/resolve', ['path' => $this->uniquePath('harusi')], $token);
+        $taken = $this->responsePayload()['key'];
+
+        $this->request('PATCH', '/api/projects/'.$key, ['key' => $taken], $token);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        self::assertSame(ProblemType::PROJECT_CONFLICT, $this->responsePayload()['type']);
+    }
+
+    public function testAProjectKeepsItsOwnPathAndKeyWithoutColliding(): void
+    {
+        $token = $this->createToken();
+        $path = $this->uniquePath('maji');
+
+        $this->request('POST', '/api/projects/resolve', ['path' => $path], $token);
+        $key = $this->responsePayload()['key'];
+
+        $this->request('PATCH', '/api/projects/'.$key, ['path' => $path, 'key' => $key], $token);
+
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testAMalformedKeyIsRefused(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+
+        $this->request('PATCH', '/api/projects/'.$key, ['key' => 'maji-ya-mayotte'], $token);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertArrayHasKey('key', $this->responsePayload()['errors']);
+    }
+
+    public function testARelativePathIsRefused(): void
+    {
+        $token = $this->createToken();
+        $key = $this->resolveProject('maji');
+
+        $this->request('PATCH', '/api/projects/'.$key, ['path' => 'projects/maji'], $token);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSame(ProblemType::INVALID_PROJECT_PATH, $this->responsePayload()['type']);
+    }
+
+    /**
+     * Renaming is a write, and the resolve scope is what a session-starting
+     * token carries. A read-only token must not be able to move a project.
+     */
+    public function testUpdateNeedsTheProjectsWriteScope(): void
+    {
+        $writer = $this->createToken();
+        $key = $this->resolveProject('maji');
+
+        $reader = $this->createToken([ApiTokenScope::TicketsWrite]);
+        $this->request('PATCH', '/api/projects/'.$key, ['name' => 'Elsewhere'], $reader);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+
+        // And the writer's project is untouched by the attempt.
+        $this->request('GET', '/api/projects/'.$key, token: $writer);
+        self::assertNotSame('Elsewhere', $this->responsePayload()['name']);
+    }
+
+    /**
+     * Resolution is replayed at every session start, so it must stay a read for
+     * a project that already exists — otherwise it would undo a rename.
+     */
+    public function testResolveStillRefusesToRenameAnExistingProject(): void
+    {
+        $token = $this->createToken();
+        $path = $this->uniquePath('maji');
+
+        $this->request('POST', '/api/projects/resolve', ['path' => $path, 'name' => 'Maji'], $token);
+        $this->request('PATCH', '/api/projects/'.$this->responsePayload()['key'], ['name' => 'Maji ya Mayotte'], $token);
+
+        $this->request('POST', '/api/projects/resolve', ['path' => $path, 'name' => 'Maji'], $token);
+
+        self::assertSame('Maji ya Mayotte', $this->responsePayload()['name']);
+    }
+
+    private function resolveProject(string $name): string
+    {
+        $this->request('POST', '/api/projects/resolve', ['path' => $this->uniquePath($name)], $this->createToken());
+
+        return $this->responsePayload()['key'];
     }
 }

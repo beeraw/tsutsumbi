@@ -56,9 +56,29 @@ project:
     action:
         archive: "Archivar el proyecto"
         unarchive: "Desarchivar el proyecto"
+        edit: "Modificar el proyecto"
+        back: "Volver al proyecto"
+        submit: "Guardar"
     flash:
         archived: "Proyecto archivado. No se pierde nada: sigue consultable."
         unarchived: "Proyecto desarchivado."
+        updated: "Proyecto actualizado."
+    edit:
+        title: "Modificar el proyecto"
+        subtitle: "El nombre y la descripción se leen aquí; la ruta y la clave son la identidad del proyecto, y conviene cambiarlas con conocimiento de causa."
+    form:
+        name:
+            label: "Nombre"
+        description:
+            label: "Descripción"
+            help: "Markdown admitido."
+            placeholder: "Para qué sirve este proyecto y qué conviene saber antes de tocarlo."
+        path:
+            label: "Ruta"
+            help: "Ruta absoluta de la carpeta. Es por ella que un agente vuelve a encontrar el proyecto al iniciar una sesión: cambiarla sin mover la carpeta creará un segundo proyecto en el próximo inicio."
+        key:
+            label: "Clave"
+            help: "Diez caracteres como máximo, letras y cifras. Los tickets toman de ella su identificador: pasar de TSUTSUMBI a TSU convierte TSUTSUMBI-42 en TSU-42, y la referencia antigua, escrita en un commit o un mensaje, ya no lleva a ninguna parte."
 
 ticket:
     status:

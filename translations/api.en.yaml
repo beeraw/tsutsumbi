@@ -7,6 +7,7 @@ api:
         validation_failed: "The submitted data is invalid"
         invalid_ticket_state: "Invalid ticket state"
         invalid_project_path: "Invalid project path"
+        project_conflict: "Conflict with another project"
         attachment_rejected: "Attachment refused"
         rate_limited: "Too many requests"
         internal: "Internal error"

@@ -9,7 +9,7 @@ const TICKET_RESOLUTIONS = ['fixed', 'wont_do', 'abandoned', 'duplicate', 'obsol
 const TICKET_PRIORITIES = ['low', 'normal', 'high'];
 
 /**
- * The seven tools, and no more.
+ * The eight tools, and no more.
  *
  * The descriptions are where the rules of use live. An agent reads them at the
  * moment it decides what to call, which is the only moment they can change what
@@ -49,6 +49,57 @@ export function createTools(api) {
         api.post('/api/projects/resolve', {
           path: resolveProjectPath(path),
           ...(name ? { name } : {}),
+        }),
+    },
+
+    {
+      name: 'update_project',
+      description: [
+        'Change a project: its name, its description, its path, or its key.',
+        '',
+        'resolve_project will not do any of this, by design — an agent replays it at the start of every session,',
+        'and a resolve that wrote would undo a rename made from the interface. So a change is asked for here, by',
+        'project key, and only ever on purpose.',
+        '',
+        'The path is what resolve_project matches on. Change it when the directory itself has moved, otherwise the',
+        'next session start creates a second project for the same work.',
+        '',
+        'The key is the prefix of every ticket identifier the project carries: renaming it turns MAJI-42 into',
+        'MJ-42, and the old form stops resolving — including in commits, messages and links already written',
+        'elsewhere. Worth doing when the key is plainly wrong, not to tidy it up.',
+      ].join('\n'),
+      inputSchema: {
+        type: 'object',
+        properties: {
+          project: { type: 'string', description: 'Key of the project to change, for example MAJI.' },
+          name: { type: 'string', maxLength: 120, description: 'Readable project name.' },
+          description: {
+            type: 'string',
+            description: 'Markdown. What the project is for. Send an empty string to clear it.',
+          },
+          path: {
+            type: 'string',
+            description: 'New absolute path of the project directory. Only when the directory has moved.',
+          },
+          key: {
+            type: 'string',
+            description:
+              'New project key: up to ten letters and digits. Rewrites the identifier of every ticket in the project.',
+          },
+        },
+        required: ['project'],
+        additionalProperties: false,
+      },
+      handler: async ({ project, description, path, ...rest }) =>
+        api.patch(`/api/projects/${encodeURIComponent(project)}`, {
+          ...rest,
+          // A moved directory is given as the agent has it, so it goes through
+          // the same symlink resolution as resolve_project: two spellings of one
+          // directory must not end up as two projects.
+          ...(path === undefined ? {} : { path: resolveProjectPath(path) }),
+          // An empty string is how a text field is cleared from a tool call,
+          // where a JSON null cannot be told from an absent key.
+          ...(description === undefined ? {} : { description: description === '' ? null : description }),
         }),
     },
 

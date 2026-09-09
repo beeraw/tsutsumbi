@@ -2,8 +2,16 @@ project:
     path:
         not_blank: "O caminho do projeto é obrigatório."
         too_long: "O caminho do projeto não pode exceder {{ limit }} caracteres."
+        invalid: "O caminho deve ser absoluto, sem «..» que suba acima da raiz."
     name:
+        not_blank: "O nome do projeto é obrigatório."
         too_long: "O nome do projeto não pode exceder {{ limit }} caracteres."
+    key:
+        invalid: "A chave do projeto deve ter no máximo 10 letras e algarismos."
+    # Refusals raised by the domain itself, rendered as form errors.
+    conflict:
+        path_taken: "Outro projeto já é acompanhado neste caminho."
+        key_taken: "Outro projeto já tem esta chave."
 
 ticket:
     title:

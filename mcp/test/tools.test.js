@@ -24,11 +24,12 @@ function tool(api, name) {
 }
 
 describe('the tool surface', () => {
-  it('exposes seven tools and no more', () => {
+  it('exposes eight tools and no more', () => {
     const names = createTools(recordingApi()).map((candidate) => candidate.name);
 
     assert.deepEqual(names, [
       'resolve_project',
+      'update_project',
       'list_tickets',
       'get_ticket',
       'create_ticket',
@@ -47,6 +48,8 @@ describe('the tool surface', () => {
 
     assert.match(tools.get('resolve_project'), /idempotent/i);
     assert.match(tools.get('resolve_project'), /before opening anything/i);
+    assert.match(tools.get('update_project'), /resolve_project will not do any of this/i);
+    assert.match(tools.get('update_project'), /stops resolving/i);
     assert.match(tools.get('get_ticket'), /before commenting/i);
     assert.match(tools.get('create_ticket'), /Never a technical step/i);
     assert.match(tools.get('update_ticket'), /note is required/i);
@@ -81,6 +84,48 @@ describe('resolve_project', () => {
     await tool(api, 'resolve_project').handler({ path: '/home/dev/projects/maji' });
 
     assert.ok(!('name' in api.calls[0].body));
+  });
+});
+
+describe('update_project', () => {
+  it('addresses the project by key and sends only what changes', async () => {
+    const api = recordingApi();
+
+    await tool(api, 'update_project').handler({ project: 'MAJI', name: 'Maji ya Mayotte' });
+
+    assert.deepEqual(api.calls[0], {
+      method: 'PATCH',
+      path: '/api/projects/MAJI',
+      body: { name: 'Maji ya Mayotte' },
+    });
+  });
+
+  /**
+   * The same canonical form resolve_project sends, and for the same reason: a
+   * moved directory spelled two ways must not end up as two projects.
+   */
+  it('brings a new path to its canonical form', async () => {
+    const api = recordingApi();
+
+    await tool(api, 'update_project').handler({ project: 'MAJI', path: '/home/dev/projects/harusi/../maji/' });
+
+    assert.deepEqual(api.calls[0].body, { path: '/home/dev/projects/maji' });
+  });
+
+  it('turns an empty description into the null that clears it', async () => {
+    const api = recordingApi();
+
+    await tool(api, 'update_project').handler({ project: 'MAJI', description: '' });
+
+    assert.deepEqual(api.calls[0].body, { description: null });
+  });
+
+  it('escapes the key rather than letting it shape the path', async () => {
+    const api = recordingApi();
+
+    await tool(api, 'update_project').handler({ project: '../tickets', name: 'x' });
+
+    assert.equal(api.calls[0].path, '/api/projects/..%2Ftickets');
   });
 });
 

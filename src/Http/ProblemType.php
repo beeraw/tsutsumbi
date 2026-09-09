@@ -17,6 +17,7 @@ final class ProblemType
     public const string VALIDATION_FAILED = 'urn:tsutsumbi:validation-failed';
     public const string INVALID_TICKET_STATE = 'urn:tsutsumbi:invalid-ticket-state';
     public const string INVALID_PROJECT_PATH = 'urn:tsutsumbi:invalid-project-path';
+    public const string PROJECT_CONFLICT = 'urn:tsutsumbi:project-conflict';
     public const string ATTACHMENT_REJECTED = 'urn:tsutsumbi:attachment-rejected';
     public const string RATE_LIMITED = 'urn:tsutsumbi:rate-limited';
     public const string INTERNAL_ERROR = 'urn:tsutsumbi:internal-error';

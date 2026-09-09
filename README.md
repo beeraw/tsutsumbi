@@ -163,7 +163,12 @@ tickets. Archived ones stay out of the way until asked for.
 
 **Project** — the ticket list, filterable by status, type and resolution, with
 full-text search. Closed tickets are hidden by default: this is the live view of
-the specification, not a deletion.
+the specification, not a deletion. "Edit project" opens the name, the description,
+the path and the key. The last two are the project's identity: a path changed
+without the directory having moved has the next session start create a second
+project, and a key changed rewrites the identifier of every ticket the project
+carries — `MAJI-42` becomes `MJ-42`, and what was written in a commit or a
+message stops resolving. The form says so rather than refusing.
 
 Column headings sort the list, except "Opened by": actors are a single table for
 two shapes — a human carries an email address, an agent a label — so there is no
@@ -213,6 +218,7 @@ through `Authorization: Bearer tsu_...`.
 | `POST` | `/api/projects/resolve` | `projects:write` |
 | `GET` | `/api/projects` | — |
 | `GET` | `/api/projects/{key}` | — |
+| `PATCH` | `/api/projects/{key}` | `projects:write` |
 | `POST` | `/api/projects/{key}/tickets` | `tickets:write` |
 | `GET` | `/api/tickets` | — |
 | `GET` | `/api/tickets/{key}` | — |
@@ -227,6 +233,13 @@ searchable. It is the interface that hides them by default, not the API.
 
 `PATCH` tells an absent key from a key set to `null`: `{"description": null}`
 clears the description, omitting the key leaves it alone.
+
+`PATCH /api/projects/{key}` is what `resolve` deliberately refuses to be. A name
+handed to `resolve` is used at creation and ignored afterwards, because an agent
+replays that call at the start of every session and a resolve that wrote would
+undo a rename made from the interface. Changing a project is therefore asked for
+by key, on purpose. The `path` and the `key` are both unique, and a value another
+project holds answers `409` rather than being quietly worked around.
 
 ## Attachments
 

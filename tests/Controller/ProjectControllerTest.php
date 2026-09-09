@@ -270,6 +270,181 @@ final class ProjectControllerTest extends InterfaceTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    public function testTheProjectScreenOffersAWayToEditIt(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey());
+
+        self::assertCount(1, $crawler->filter(sprintf('a[href="/projects/%s/edit"]', $project->getKey())));
+    }
+
+    public function testTheNameAndTheDescriptionAreEditable(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+        $id = $project->getId();
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->selectButton('Save')->form();
+        $form['project_edit_form[name]'] = 'Harusi ya Mayotte';
+        $form['project_edit_form[description]'] = 'Wedding sites.';
+
+        $this->client->submit($form);
+        $this->client->followRedirect();
+
+        $reloaded = $this->reload(Project::class, $id);
+
+        self::assertSame('Harusi ya Mayotte', $reloaded->getName());
+        self::assertSame('Wedding sites.', $reloaded->getDescription());
+    }
+
+    public function testTheDescriptionIsShownOnTheProjectScreen(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+        $project->setDescription('Wedding sites on a subdomain.');
+        $this->entityManager->flush();
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey());
+
+        self::assertStringContainsString(
+            'Wedding sites on a subdomain.',
+            $crawler->filter('.page-head-description')->text(),
+        );
+    }
+
+    public function testMovingAProjectNormalisesTheNewPath(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+        $id = $project->getId();
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+        $form = $crawler->selectButton('Save')->form();
+        $form['project_edit_form[path]'] = '/tmp/tsutsumbi-tests/moved/./harusi/';
+
+        $this->client->submit($form);
+        $this->client->followRedirect();
+
+        self::assertSame('/tmp/tsutsumbi-tests/moved/harusi', $this->reload(Project::class, $id)->getPath());
+    }
+
+    /**
+     * The rename is allowed, and the reader is told what it costs rather than
+     * being stopped: the ticket identifiers are derived from this key.
+     */
+    public function testRenamingTheKeyRewritesTheTicketIdentifiers(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+        $ticket = $this->createTicket($project, 'Wedding sites on a subdomain');
+        $ticketId = $ticket->getId();
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+
+        self::assertStringContainsString(
+            'Tickets take their identifier from it',
+            $crawler->filter('body')->text(),
+        );
+
+        $form = $crawler->selectButton('Save')->form();
+        $form['project_edit_form[key]'] = 'HARUSI';
+
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/projects/HARUSI');
+        self::assertSame('HARUSI-1', $this->reload(Ticket::class, $ticketId)->getKey());
+    }
+
+    public function testAKeyAnotherProjectHoldsIsRefusedOnTheField(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+        $other = $this->createProject('kivuli');
+        $id = $project->getId();
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+        $form = $crawler->selectButton('Save')->form();
+        $form['project_edit_form[key]'] = $other->getKey();
+
+        $crawler = $this->client->submit($form);
+
+        // Symfony answers a rejected form with 422, and the page comes back
+        // with the error on the field rather than a redirect.
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('already holds this key', $crawler->filter('body')->text());
+        self::assertNotSame($other->getKey(), $this->reload(Project::class, $id)->getKey());
+    }
+
+    public function testAPathAnotherProjectHoldsIsRefusedOnTheField(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+        $other = $this->createProject('kivuli');
+        $id = $project->getId();
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+        $form = $crawler->selectButton('Save')->form();
+        $form['project_edit_form[path]'] = $other->getPath();
+
+        $crawler = $this->client->submit($form);
+
+        // Symfony answers a rejected form with 422, and the page comes back
+        // with the error on the field rather than a redirect.
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('already tracked at this path', $crawler->filter('body')->text());
+        self::assertNotSame($other->getPath(), $this->reload(Project::class, $id)->getPath());
+    }
+
+    public function testARelativePathIsRefusedOnTheField(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+        $form = $crawler->selectButton('Save')->form();
+        $form['project_edit_form[path]'] = 'tmp/harusi';
+
+        $crawler = $this->client->submit($form);
+
+        // Symfony answers a rejected form with 422, and the page comes back
+        // with the error on the field rather than a redirect.
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('must be absolute', $crawler->filter('body')->text());
+    }
+
+    public function testAnEmptyNameIsRefused(): void
+    {
+        $this->login();
+        $project = $this->createProject('harusi');
+        $id = $project->getId();
+
+        $crawler = $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+        $form = $crawler->selectButton('Save')->form();
+        $form['project_edit_form[name]'] = '  ';
+
+        $this->client->submit($form);
+
+        // Symfony answers a rejected form with 422, and the page comes back
+        // with the error on the field rather than a redirect.
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('harusi', $this->reload(Project::class, $id)->getName());
+    }
+
+    public function testEditingAProjectNeedsASession(): void
+    {
+        $project = $this->createProject('harusi');
+
+        $this->client->request('GET', '/projects/'.$project->getKey().'/edit');
+
+        self::assertResponseRedirects();
+    }
+
     public function testAnUnknownProjectIsANotFound(): void
     {
         $this->login();

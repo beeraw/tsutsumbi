@@ -7,6 +7,7 @@ namespace App\EventListener;
 use App\Exception\AttachmentRejectedException;
 use App\Exception\InvalidProjectPathException;
 use App\Exception\InvalidTicketStateException;
+use App\Exception\ProjectConflictException;
 use App\Http\ProblemJsonResponseFactory;
 use App\Http\ProblemType;
 use App\Security\ApiActor;
@@ -100,6 +101,17 @@ final readonly class ApiExceptionListener
                 Response::HTTP_UNPROCESSABLE_ENTITY,
                 ProblemType::INVALID_PROJECT_PATH,
                 'api.error.invalid_project_path',
+                $throwable->getMessage(),
+            );
+        }
+
+        // 409 rather than 422: the payload is well formed, another row simply
+        // holds the value already.
+        if ($throwable instanceof ProjectConflictException) {
+            return $this->problems->create(
+                Response::HTTP_CONFLICT,
+                ProblemType::PROJECT_CONFLICT,
+                'api.error.project_conflict',
                 $throwable->getMessage(),
             );
         }
