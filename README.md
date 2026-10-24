@@ -125,10 +125,8 @@ is a local process: it has no business in production.
 yarn --cwd mcp test
 ```
 
-The MCP SDK depends on `@hono/node-server`, which carries a moderate advisory: a
-path traversal in `serve-static`, on Windows. This server uses the stdio
-transport and serves no static file; the vulnerable path is never reached, and no
-fixed release of the SDK exists to date.
+`yarn --cwd mcp test` also runs the server end to end over the protocol, against a stub of
+the API: bearer authentication, a tool call, a rejected token, an unreachable API.
 
 ## The file that sets everything off
 
