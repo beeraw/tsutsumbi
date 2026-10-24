@@ -11,6 +11,10 @@ framework:
 
     # Note that the session will be started ONLY if you read or write from it.
     session:
+        # Files in the checkout rather than PHP's default directory, which lives inside the container and would be
+        # lost, signing everyone out, at each release.
+        handler_id: session.handler.native_file
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
         cookie_secure: true
         cookie_httponly: true
         cookie_samesite: lax
