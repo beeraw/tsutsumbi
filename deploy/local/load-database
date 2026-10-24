@@ -1,0 +1,27 @@
+#!/bin/bash
+# Copies the database of the Mac's MariaDB (named by DATABASE_URL in .env.local, read in the main checkout when run
+# from a worktree) into the database container of deploy/local/compose.yaml, replacing what it held. The Mac's
+# database is only read.
+#
+#   deploy/local/load-database
+set -euo pipefail
+
+ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+cd "$ROOT"
+compose() { docker compose -f deploy/local/compose.yaml "$@"; }
+
+# .env.local is not versioned: from a worktree, it is read in the main checkout.
+main=$(cd "$(git rev-parse --git-common-dir)/.." && pwd)
+url=$(cat .env "$main/.env.local" .env.local 2>/dev/null | grep -E '^DATABASE_URL=' | tail -1 | cut -d= -f2- | tr -d '"' || true)
+[ -n "$url" ] || { echo "Aucun DATABASE_URL dans .env ni .env.local." >&2; exit 1; }
+eval "$(php -r '$u = parse_url($argv[1]); printf("user=%s pass=%s host=%s port=%s db=%s", escapeshellarg(urldecode($u["user"])), escapeshellarg(urldecode($u["pass"] ?? "")), escapeshellarg($u["host"]), escapeshellarg((string) ($u["port"] ?? 3306)), escapeshellarg(ltrim($u["path"], "/")));' "$url")"
+
+compose up -d --wait database
+echo "Copie de $db ($host) dans le conteneur…"
+compose exec -T database mariadb -uroot -proot \
+    -e 'DROP DATABASE IF EXISTS tsutsumbi; CREATE DATABASE tsutsumbi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL ON tsutsumbi.* TO tsutsumbi;' </dev/null
+MYSQL_PWD=$pass mariadb-dump -h"$host" -P"$port" -u"$user" --single-transaction --quick --routines --triggers \
+        --default-character-set=utf8mb4 "$db" \
+    | compose exec -T database mariadb -uroot -proot --default-character-set=utf8mb4 tsutsumbi
+tables=$(compose exec -T database mariadb -uroot -proot -N -e 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema="tsutsumbi"' </dev/null)
+echo "Base chargée : $tables tables."

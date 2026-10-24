@@ -56,3 +56,7 @@
 /mcp/.pnp.*
 /mcp/yarn-error.log
 ###< tsutsumbi-mcp ###
+
+###> worktrees ###
+/.claude/worktrees/
+###< worktrees ###

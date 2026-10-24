@@ -1,0 +1,101 @@
+#!/bin/bash
+# Releases a commit of tsutsumbi by git pull.
+#
+#   tsutsumbi-deploy <environment directory> <commit>
+#
+# The environment directory holds compose.yaml and .env; the code is the git checkout named by TSUTSUMBI_SRC in .env,
+# mounted over /app in the containers. The release moves that checkout to the commit, then only does what the commit
+# needs: the system image when Dockerfile or docker/ changed (built here, no registry) and composer when the lock did.
+# Migrations and the cache always run, and the app container restarts at the end, which the host's Caddy covers by
+# holding requests for up to 15 s. The database container is started when it is not running, never recreated: a
+# release leaves it alone.
+#
+# Going back is releasing an older commit. A failure halfway leaves the checkout on the new commit with the previous
+# containers still running.
+set -euo pipefail
+
+DIR=${1:?"usage: tsutsumbi-deploy <environment directory> <commit>"}
+SHA=${2:?"usage: tsutsumbi-deploy <environment directory> <commit>"}
+[[ "$SHA" =~ ^[0-9a-f]{7,40}$ ]] || { echo "Commit invalide : $SHA" >&2; exit 1; }
+cd "$DIR"
+
+exec 9>"$DIR/.deploy.lock"
+flock -n 9 || { echo "Une livraison est déjà en cours dans $DIR." >&2; exit 1; }
+
+log() { echo "[$(date +%H:%M:%S)] $*"; }
+env_get() { grep -E "^$1=" .env | tail -1 | cut -d= -f2- || true; }
+compose() { docker compose "$@" </dev/null; }
+console() { compose run --rm --no-deps -T app php bin/console "$@"; }
+
+SRC=$(env_get TSUTSUMBI_SRC)
+SRC=${SRC:-/var/www/tsutsumbi.beeraw.yt/_online}
+OWNER=$(stat -c %U "$SRC")
+as_owner() { sudo -u "$OWNER" -H "$@"; }
+PORT=$(env_get TSUTSUMBI_PORT)
+PORT=${PORT:-8100}
+
+# The guards of the former bin/deploy: .env.local must exist and say prod, and APP_LOCALE must be set there, since .env
+# ships a default of en that would quietly flip the interface to English.
+[ -f "$SRC/.env.local" ] || { echo "Pas de .env.local dans $SRC." >&2; exit 1; }
+grep -qE '^[[:space:]]*(export[[:space:]]+)?APP_ENV[[:space:]]*=[[:space:]]*["'"'"']?prod["'"'"']?[[:space:]]*$' "$SRC/.env.local" \
+    || { echo "APP_ENV n'est pas prod dans $SRC/.env.local : livraison refusée." >&2; exit 1; }
+grep -qE '^[[:space:]]*(export[[:space:]]+)?APP_LOCALE[[:space:]]*=' "$SRC/.env.local" \
+    || { echo "Pas d'APP_LOCALE dans $SRC/.env.local : l'interface passerait en anglais." >&2; exit 1; }
+
+log "1/6 Code"
+as_owner git -C "$SRC" fetch -q origin
+OLD=$(as_owner git -C "$SRC" rev-parse HEAD)
+as_owner git -C "$SRC" checkout -q -B main "$SHA"
+CHANGED=$(as_owner git -C "$SRC" diff --name-only "$OLD" "$SHA")
+changed() { grep -qE "$1" <<<"$CHANGED"; }
+log "$OLD → $SHA ($(as_owner git -C "$SRC" log -1 --format=%s "$SHA"))"
+# compose.yaml is a copy, so that it exists before the checkout carries it (deploy/production/cutover): it follows the
+# code here. This script is a copy too, but it cannot replace itself while running: it says so instead.
+if changed '^deploy/production/compose\.yaml$'; then
+    cp "$SRC/deploy/production/compose.yaml" compose.yaml
+    log "compose.yaml mis à jour."
+fi
+if changed '^deploy/server/tsutsumbi-deploy$'; then
+    log "tsutsumbi-deploy a changé dans ce commit : le réinstaller depuis le checkout après la livraison."
+fi
+
+if changed '^(Dockerfile|docker/)' || ! docker image inspect tsutsumbi:system >/dev/null 2>&1; then
+    log "2/6 Image système"
+    compose build -q app
+else
+    log "2/6 Image système inchangée"
+fi
+
+if changed '^(composer\.(json|lock)|symfony\.lock)$'; then
+    log "3/6 Composer"
+    compose run --rm --no-deps -T app composer install --no-dev --no-interaction --no-progress --optimize-autoloader
+else
+    log "3/6 Dépendances PHP inchangées"
+fi
+
+# No front build: the stylesheet and the script are served from public/ as they are (README, "Interface").
+log "4/6 Pas de build front"
+
+log "5/6 Migrations et cache"
+compose up -d --wait --no-recreate database
+console doctrine:migrations:migrate --no-interaction --allow-no-migration
+# cache:clear boots on the cache compiled for the previous commit: if that commit removed a bundle, the boot fails on
+# a class that no longer exists, and only then is the stale cache purged.
+if ! console cache:clear; then
+    log "Le cache précédent ne démarre plus : purge."
+    rm -rf "$SRC/var/cache/prod"
+    console cache:clear
+fi
+
+log "6/6 Redémarrage"
+compose up -d --no-deps --force-recreate app
+for _ in $(seq 1 60); do
+    if curl -fsS -m 2 "http://127.0.0.1:$PORT/healthz" >/dev/null 2>&1; then
+        log "Livré : $SHA."
+        exit 0
+    fi
+    sleep 1
+done
+log "ÉCHEC : l'application ne répond pas après le redémarrage."
+compose logs --tail 40 app || true
+exit 1

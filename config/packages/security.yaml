@@ -55,6 +55,8 @@ security:
     access_control:
         - { path: ^/api, roles: ROLE_API }
         - { path: ^/login$, roles: PUBLIC_ACCESS }
+        # Liveness probe of the release script and of the container health check.
+        - { path: ^/healthz$, roles: PUBLIC_ACCESS }
         # Token and user management is reachable through a human session only:
         # there is deliberately no administration scope on the machine side.
         - { path: ^/, roles: ROLE_USER }

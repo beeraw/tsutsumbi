@@ -1,0 +1,23 @@
+{
+	frankenphp
+	auto_https off
+	admin off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+# Plain HTTP, published on the host's loopback only: TLS, the bot and probe filters belong to the host's Caddy, which
+# forwards tsutsumbi.beeraw.yt here through the Docker gateway. Nothing is buffered or held back on this side: the API
+# answers plain JSON, and the Authorization header of its bearer tokens reaches PHP untouched.
+http://:{$TSUTSUMBI_PORT:8100} {
+	bind {$TSUTSUMBI_BIND:127.0.0.1}
+	root * /app/public
+	encode zstd gzip
+	php_server
+
+	log {
+		output stdout
+		format json
+	}
+}

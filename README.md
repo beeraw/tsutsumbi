@@ -7,38 +7,45 @@ closes them without human approval; the human reads, redirects, archives.
 
 ## Requirements
 
-PHP 8.3+, Composer, MariaDB 10.6+, Caddy, and Node 20+ with Yarn 4 for the MCP
-server. **No Docker**: the stack runs on local services.
+Docker (the application and its database run in containers, in development and
+in production), Caddy on the host for TLS, and Node 20+ with Yarn 4 for the MCP
+server. PHP, Composer and MariaDB on the machine are only needed to run the
+tests and the quality gate outside the container.
 
 ## Local install
 
+The development site runs under Docker, with the production image: FrankenPHP
+and PHP, the checkout mounted over `/app`, environment `dev`, and a MariaDB 12.3
+container. See `deploy/README.md` for the principle.
+
 ```bash
-composer install
-```
-
-Create `.env.local`, never committed. The values in `.env` are stand-ins: no real
-credential is ever committed.
-
-```
-APP_SECRET=<32 bytes, hexadecimal>
-DATABASE_URL="mysql://<user>:<password>@127.0.0.1:3306/tsutsumbi?serverVersion=12.3.2-MariaDB&charset=utf8mb4"
+docker compose -f deploy/local/compose.yaml up -d --build
 ```
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE tsutsumbi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+docker compose -f deploy/local/compose.yaml exec app composer install
 ```
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE tsutsumbi_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+deploy/local/load-database
 ```
+
+`load-database` replaces the container's database with a copy of the Mac's
+MariaDB one (named by `DATABASE_URL` in `.env.local`, which stays outside version
+control, never committed). Without a database to copy, run the migrations in the
+container instead:
 
 ```bash
-php bin/console doctrine:migrations:migrate
+docker compose -f deploy/local/compose.yaml exec app php bin/console doctrine:migrations:migrate
 ```
 
-The tests need their own file, `.env.test.local`, also outside version control.
-Symfony deliberately ignores `.env.local` in the test environment, so the value
-is not inherited there:
+The site answers on `http://127.0.0.1:8100`. For `https://tsutsumbi.local.beeraw.yt`,
+add a block to the Mac's Caddyfile: `tls internal` and
+`reverse_proxy 127.0.0.1:8100`. The container database is published on
+`127.0.0.1:3326`, which is where `bin/console` run on the Mac connects (`.env.dev`).
+
+The tests keep their own database, `tsutsumbi_test`, on the MariaDB of the Mac
+(`.env.test.local`, outside version control, as before):
 
 ```
 DATABASE_URL="mysql://<user>:<password>@127.0.0.1:3306/tsutsumbi?serverVersion=12.3.2-MariaDB&charset=utf8mb4"
@@ -47,9 +54,6 @@ DATABASE_URL="mysql://<user>:<password>@127.0.0.1:3306/tsutsumbi?serverVersion=1
 ```bash
 php bin/console doctrine:migrations:migrate --env=test
 ```
-
-The `tsutsumbi` host resolves to 127.0.0.1 in `/etc/hosts`, and the Caddy vhost
-points at `public/` with `tls internal`.
 
 ## Accounts and tokens
 
@@ -151,8 +155,9 @@ Chains PHP-CS-Fixer in check mode, PHPStan level 8 and PHPUnit. The three
 commands also exist separately: `composer cs`, `composer stan`, `composer test`.
 `composer cs:fix` applies the style corrections.
 
-Nothing runs this suite for you: there is no CI in this repository, by choice.
-The quality gate is local, and it is to be passed before pushing.
+Nothing runs this suite for you: the only workflow of this repository delivers
+`main`, it does not test. The quality gate is local, and it is to be passed before
+pushing. In the development container: `docker compose -f deploy/local/compose.yaml exec app composer qa`.
 
 ## Interface
 
@@ -254,71 +259,34 @@ name. The original name is kept for display only.
 
 ## Production
 
-Debian server, Caddy, PHP-FPM 8.5, MariaDB. No Docker.
+Debian server, Caddy on the host, and two containers: the application
+(FrankenPHP, PHP 8.5) and its MariaDB 12.3. The host's Caddy keeps the TLS and
+forwards to `127.0.0.1:8100`. The procedure to move a server from PHP-FPM to the
+containers, the layout under `/srv/tsutsumbi-production` and the rollback are in
+`deploy/README.md`.
 
-### First install
+`.env.local` stays in the checkout, outside version control, with `APP_ENV=prod`,
+`APP_SECRET`, `DEFAULT_URI`, `API_RATE_LIMIT` and `APP_LOCALE`. Its `DATABASE_URL`
+is overridden by the container's own.
 
-```bash
-sudo apt install php8.5-fpm php8.5-mysql php8.5-intl php8.5-mbstring php8.5-xml php8.5-zip php8.5-imagick mariadb-server caddy git
-```
-
-```bash
-sudo git clone https://github.com/beeraw/tsutsumbi.git /var/www/tsutsumbi/_online
-```
-
-```bash
-sudo mariadb -e "CREATE DATABASE tsutsumbi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-```
-
-```bash
-sudo mariadb -e "CREATE USER 'tsutsumbi'@'localhost' IDENTIFIED BY 'to-be-replaced'; GRANT ALL ON tsutsumbi.* TO 'tsutsumbi'@'localhost'"
-```
-
-Write `.env.local` in `_online/`, never committed:
-
-```
-APP_ENV=prod
-APP_SECRET=<32 bytes, hexadecimal>
-DATABASE_URL="mysql://tsutsumbi:to-be-replaced@127.0.0.1:3306/tsutsumbi?serverVersion=10.11.0-MariaDB&charset=utf8mb4"
-DEFAULT_URI=https://tsutsumbi.example.com
-API_RATE_LIMIT=120
-```
-
-Add the vhost to the production Caddyfile alongside the other sites, then reload
-Caddy. Finally create the first human user with `app:user:create`.
-
-One thing not to miss in that vhost: tsutsumbi sets its own security headers. The
-`Strict-Transport-Security` that Caddy adds by convention must therefore be
+One thing not to miss in the Caddy site block: tsutsumbi sets its own
+`Strict-Transport-Security`. The one Caddy adds by convention must therefore be
 prefixed with a `?`, which only sets it when absent — otherwise the response goes
-out with the same header twice.
+out with the same header twice. `deploy/production/Caddyfile.production` has it.
 
 ### Deploying
 
-Deployment is a script on the server, `bin/deploy`, run by hand over SSH. It is
-in `.gitignore` and lives nowhere else: it names the host's own layout — paths,
-service names — which a public repository has no reason to describe. Pushing
-does not deploy, and nothing watches the branch.
+A push on `main` runs the GitHub workflow `CD main`, which calls
+`deploy/server/tsutsumbi-deploy` on the server. The script refuses to start
+unless `.env.local` exists, reads `APP_ENV=prod` and sets `APP_LOCALE` (`.env`
+ships a default of `en`, so a missing one would quietly flip the interface to
+English). It then moves the checkout to the commit, rebuilds the system image
+only if `Dockerfile` or `docker/` changed, runs `composer install` only if the
+lock changed, applies the migrations, clears the cache, restarts the container
+and waits for `/healthz`.
 
-```bash
-cd /var/www/tsutsumbi/_online && ./bin/deploy
-```
-
-Write it once when the server is set up. What it has to do, in order:
-
-1. Refuse to start unless `.env.local` exists, `APP_ENV` reads `prod`, and
-   `APP_LOCALE` is set. That last one matters: `.env` ships a default of `en`,
-   so a missing `APP_LOCALE` would quietly flip the interface to English rather
-   than fail where you can see it.
-2. `git pull --ff-only`, or `git fetch` then `git checkout <ref>` when a ref is
-   given, which is how a rollback is done.
-3. `composer install --no-dev --optimize-autoloader`.
-4. `bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration`.
-5. `bin/console cache:clear`.
-6. `sudo systemctl reload php8.5-fpm`.
-
-Because the script is not versioned, `git pull` never overwrites it: an edit
-takes effect on the very next run. The trade is that nothing backs it up — if
-the server is rebuilt, it is rewritten from this list.
+To release a given commit, or to go back, run the workflow by hand from the
+Actions tab and give the commit.
 
 A rollback brings back the code, not the schema: if the migration being undone
 altered the database, an earlier backup is needed, and the script does not take
@@ -341,10 +309,6 @@ typefaces carry their own SIL Open Font Licence, kept next to them in
 `public/fonts/`.
 
 ## Deliberate deviations from the specification
-
-**Docker dropped.** The specification called for a development Docker setup. The
-machine has none and the surrounding projects run on local MariaDB and Caddy; this
-project does the same.
 
 **Purely lexical path normalisation.** The specification asked for symbolic links
 to be resolved. tsutsumbi does not necessarily run on the machine hosting the
@@ -372,8 +336,9 @@ human side is already on a session, so it brings nothing here — and the inline
 script would force `'unsafe-inline'` into a CSP whose whole point is to do
 without it.
 
-**The deployment script is not in the repository.** The specification put it
-under version control, next to the code it deploys. Publishing the repository
-changed the calculation: the script is the one file that describes the host it
-runs on, and that description is worth more to a stranger than the versioning is
-to me. It lives on the server, and this README carries what it does.
+**The deployment script is in the repository, after all.** The specification put
+it under version control; the first version of the project kept it on the server
+alone, because it names the host's layout. Moving to containers made it part of
+the delivery (the workflow, the compose file and the script change together), so
+`deploy/` now carries it. The cost is that a public repository describes paths,
+ports and service names of the host; no secret, address or credential is in it.

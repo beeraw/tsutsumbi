@@ -25,6 +25,14 @@ final class SecurityControllerTest extends InterfaceTestCase
         self::assertCount(1, $crawler->filter('input[name="_csrf_token"]'));
     }
 
+    public function testTheHealthProbeIsPublicAndReachesTheDatabase(): void
+    {
+        $this->client->request('GET', '/healthz');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('ok', $this->client->getResponse()->getContent());
+    }
+
     public function testTheRightCredentialsOpenTheDashboard(): void
     {
         $user = $this->createUser();

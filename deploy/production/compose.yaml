@@ -1,0 +1,64 @@
+# Production on rossem. /srv/tsutsumbi-production holds this file, its .env (passwords, TSUTSUMBI_SRC, ports) and the
+# database files in mysql/. The code is the git checkout of the previous installation, mounted over /app with its
+# .env.local and its var/ (cache, API log, attachments), and tsutsumbi-deploy releases a commit there by git pull. The
+# image carries PHP and the tools only, and is built here, from that checkout, when Dockerfile or docker/ change.
+#
+# As on Stetboard, the database runs in its own container: the MariaDB of the host, shared with the other sites of
+# rossem, no longer serves tsutsumbi once deploy/production/cutover has moved the data. FrankenPHP is published on
+# 127.0.0.1:TSUTSUMBI_PORT only, where the host's Caddy forwards tsutsumbi.beeraw.yt, and the database on
+# 127.0.0.1:TSUTSUMBI_DB_PORT, for an administrator on the server.
+#
+# No worker and no cron container: tsutsumbi has no Messenger transport, no scheduled command and sends no e-mail.
+
+name: tsutsumbi-production
+
+services:
+    app:
+        image: tsutsumbi:system
+        build:
+            context: ${TSUTSUMBI_SRC:-/var/www/tsutsumbi.beeraw.yt/_online}
+        # deploy:www-data, the identity of the former PHP-FPM pool, which owns the checkout and var/.
+        user: "1001:33"
+        volumes:
+            - ${TSUTSUMBI_SRC:-/var/www/tsutsumbi.beeraw.yt/_online}:/app
+        environment:
+            APP_ENV: prod
+            # Wins over the DATABASE_URL of the checkout's .env.local, which still names the host's MariaDB.
+            DATABASE_URL: mysql://tsutsumbi:${DB_PASSWORD}@database:3306/tsutsumbi?serverVersion=mariadb-12.3.3&charset=utf8mb4
+            # The host's Caddy comes through the Docker gateway.
+            TSUTSUMBI_BIND: 0.0.0.0
+            SYMFONY_TRUSTED_PROXIES: 127.0.0.1,PRIVATE_SUBNETS
+            # In the checkout, so that a release's composer install only downloads what changed.
+            COMPOSER_CACHE_DIR: /app/var/composer-cache
+        ports:
+            - 127.0.0.1:${TSUTSUMBI_PORT:-8100}:8100
+        depends_on:
+            database:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8100/healthz || exit 1"]
+            interval: 10s
+            timeout: 5s
+            start_period: 20s
+            retries: 3
+        restart: unless-stopped
+
+    database:
+        image: mariadb:12.3
+        environment:
+            TZ: Indian/Mayotte
+            MARIADB_DATABASE: tsutsumbi
+            MARIADB_USER: tsutsumbi
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+        command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+        volumes:
+            - ./mysql:/var/lib/mysql
+        ports:
+            - 127.0.0.1:${TSUTSUMBI_DB_PORT:-3316}:3306
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        restart: unless-stopped
