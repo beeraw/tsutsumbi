@@ -16,11 +16,16 @@ use Symfony\Component\Routing\Attribute\Route;
 
 use function basename;
 use function flush;
+use function str_starts_with;
+use function substr;
 
 /**
  * Backup API pulled by an outside job, under the "backup" firewall: no token, no session, only the shared secret. It
  * comes as the X-Backup-Secret header or, for clients that cannot set one, as the "secret" query parameter (which
  * then shows in the access logs). A wrong or missing secret gets a 404, which says nothing about the API being there.
+ *
+ * Prefer the bearer token: Caddy writes the Authorization header as REDACTED in its access logs, in the
+ * container as on the host, while it logs the X-Backup-Secret header in clear.
  */
 #[Route('/api', name: 'api_backup_')]
 final class BackupApiController extends AbstractController
@@ -70,7 +75,12 @@ final class BackupApiController extends AbstractController
 
     private function denyUnlessAuthorized(Request $request, BackupService $service): void
     {
-        $secret = $request->headers->get('X-Backup-Secret') ?? $request->query->getString('secret');
+        // A bearer token is what Caddy writes as REDACTED in its access logs, here and on the host; X-Backup-Secret,
+        // which it logs in clear, stays for the clients that still send it.
+        $authorization = (string) $request->headers->get('Authorization');
+        $secret = str_starts_with($authorization, 'Bearer ')
+            ? substr($authorization, 7)
+            : ($request->headers->get('X-Backup-Secret') ?? $request->query->getString('secret'));
 
         if (!$service->isAuthorized($secret)) {
             throw $this->createNotFoundException();
