@@ -14,12 +14,14 @@ ENV TZ=Indian/Mayotte \
     XDG_DATA_HOME=/data \
     COMPOSER_HOME=/tmp/composer
 
-# imagemagick brings the libraries Imagick converts attachments with (WebP included); curl serves the health check.
+# imagemagick brings the libraries Imagick converts attachments with (WebP included); curl serves the health check;
+# mariadb-client brings mariadb-dump, which the backup API streams the database with.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         imagemagick \
         tzdata \
         curl \
+        mariadb-client \
     && rm -rf /var/lib/apt/lists/*
 
 # ctype, fileinfo, iconv, mbstring and zlib are compiled into the base image.

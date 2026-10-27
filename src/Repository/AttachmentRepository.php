@@ -17,4 +17,18 @@ class AttachmentRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Attachment::class);
     }
+
+    /**
+     * @return list<Attachment>
+     */
+    public function findAfterId(int $min, int $limit): array
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.id > :min')
+            ->setParameter('min', $min)
+            ->orderBy('a.id', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

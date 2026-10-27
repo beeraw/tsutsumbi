@@ -14,6 +14,13 @@ security:
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
 
+        # Backup API: no token and no user, the controller checks the shared secret itself. Listed path by path, and
+        # ahead of "api", so that nothing else under /api ever skips the token.
+        backup:
+            pattern: ^/api/(database/dump|media/(files|download))$
+            stateless: true
+            security: false
+
         # Machine calls. Stateless by construction: no session, no cookie, the
         # bearer token is verified again on every single request.
         api:
