@@ -32,7 +32,7 @@ dashboard:
         projects: "{0}nenhum projeto|{1}1 projeto|]1,Inf[ %count% projetos"
         active: "{0}nenhum ticket aberto|{1}1 ticket aberto|]1,Inf[ %count% tickets abertos"
         blocked: "{0}nenhum ticket bloqueado|{1}1 ticket bloqueado|]1,Inf[ %count% tickets bloqueados"
-    legend: "Um filete vermelho na margem assinala um projeto com pelo menos um ticket bloqueado. Os projetos arquivados permanecem na lista, em segundo plano."
+    legend: "Um quadrado vermelho antes do nome assinala um projeto com pelo menos um ticket bloqueado. Os projetos arquivados permanecem na lista, em segundo plano."
     empty:
         title: "Nenhum projeto acompanhado."
         body: "Os projetos aparecem sozinhos: o primeiro agente que abre um ticket a partir de um repositório cria o projeto correspondente. Aqui não há nada a fazer."
@@ -172,6 +172,7 @@ ticket:
         change_status: "Mudar o estado"
         reopen_or_change: "Reabrir ou mudar a resolução"
         apply: "Aplicar"
+        cancel: "Cancelar"
     form:
         title:
             label: "Título"

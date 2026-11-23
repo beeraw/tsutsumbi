@@ -2,19 +2,19 @@
  * tsutsumbi — an instrument, not a page.
  *
  * The interface is read several times a day and mostly scanned, so density is
- * the point — but density is not the same thing as small. The navy is the
- * chrome, the orange is the mark and the focus ring, and four muted hues carry
- * the ticket statuses. Nothing else is saturated, which is why the eye lands on
- * the one thing that is.
+ * the point — but density is not the same thing as small. The orange of the
+ * insect is the chrome — the rail, the primary action, the status banner of a
+ * ticket in progress — on warm neutral grounds, and a status is a small square
+ * of colour beside its word: hollow to do, orange in progress, red blocked,
+ * green done. Nothing marks a row by a stripe down its left edge.
  *
  * Four decisions carry the rest of the file:
  *
  *   1. The type scale sits one notch above where it started. The base is 15px
- *      and
- *      nothing is allowed below 12 — the scale used to bottom out at 10.5,
+ *      and nothing is allowed below 12 — the scale used to bottom out at 10.5,
  *      which is where column heads, paths and dates were living. The row is
- *      38px, so a 1080p screen shows twenty-six of them rather than thirty.
- *      That is the price, paid knowingly.
+ *      42px, so a 1080p screen shows about twenty of them. That is the price
+ *      of a list read rather than scanned, paid knowingly.
  *   2. The fixed grid columns are sized for that scale. They are declared in
  *      rem and the text inside them is not, so a scale that moved without them
  *      would show up as a truncation bug.
@@ -23,74 +23,63 @@
  *      Under a finger it stays native. See the dropdown section.
  *   4. The sheet is written mobile first: every media query is a min-width, the
  *      unqualified rules are the phone, and each breakpoint adds what a wider
- *      screen affords. Three of them, each about a different thing:
+ *      screen affords. Two of them, each about a different thing:
  *
- *        43.75rem / 700px  — navigation: drawer and tab bar become a rail
- *        75rem    / 1200px — the aside: the rail unfolds, the ticket gets its
- *                            column of metadata
- *        87.5rem  / 1400px — results: the filter sheet becomes a right column
+ *        43.75rem / 700px  — navigation: the drawer becomes a rail
+ *        75rem    / 1200px — room: the rail unfolds, the filter sheet becomes
+ *                            a bar above the list
  *
  *      The lists are not on that list. Whether a row can hold six columns is a
- *      question about the list's own box — the same 1440px screen gives it
- *      1088px with the filters in a sheet and 766px with them in a column — so
- *      they are container queries, at 43rem and 57rem of the grid itself.
+ *      question about the list's own box rather than the window's — the rail
+ *      folded or open changes it by ten rems — so they are container queries,
+ *      at 43rem and 57rem of the grid itself.
  *
  *      And one query that is not about width at all: `pointer: fine` decides
  *      the size of anything that gets clicked or tapped, and whether the
  *      dropdown replaces the native menu.
  *
- * Sections, in order: fonts, tokens, reset, shell, rail, tabbar, topbar,
+ * Sections, in order: fonts, tokens, reset, shell, rail, topbar,
  * flashes, page head, grids, badges, actors, results, forms, dropdown, ticket,
  * timeline, prose, tokens screen, login, then the three breakpoints.
  */
 
 /* ------------------------------------------------------------------- fonts */
 
+/* The beeraw family, scaled to Nunito's x-height: the sizes below were tuned
+   for Nunito and still hold. Variable fonts, one file per style. */
 @font-face {
-    font-family: 'Nunito';
+    font-family: 'beeraw text';
     font-style: normal;
-    font-weight: 400 700;
+    font-weight: 100 900;
     font-display: swap;
-    src: url('/fonts/nunito-latin.woff2') format('woff2');
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
-        U+FEFF, U+FFFD;
+    src: url('/fonts/beeraw-text.woff2') format('woff2');
 }
 
 @font-face {
-    font-family: 'Nunito';
-    font-style: normal;
-    font-weight: 400 700;
+    font-family: 'beeraw text';
+    font-style: italic;
+    font-weight: 100 900;
     font-display: swap;
-    src: url('/fonts/nunito-latin-ext.woff2') format('woff2');
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
-        U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
-        U+2113, U+2C60-2C7F, U+A720-A7FF;
+    src: url('/fonts/beeraw-text-italic.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'beeraw head';
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('/fonts/beeraw-head.woff2') format('woff2');
 }
 
 /* Identifiers — ticket keys, project paths, agent slugs, scopes, tokens — are
    strings a human compares character by character. A monospace face makes that
    comparison possible; the proportional one does not. */
 @font-face {
-    font-family: 'JetBrains Mono';
+    font-family: 'beeraw mono';
     font-style: normal;
-    font-weight: 400 600;
+    font-weight: 100 800;
     font-display: swap;
-    src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
-        U+FEFF, U+FFFD;
-}
-
-@font-face {
-    font-family: 'JetBrains Mono';
-    font-style: normal;
-    font-weight: 400 600;
-    font-display: swap;
-    src: url('/fonts/jetbrains-mono-latin-ext.woff2') format('woff2');
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
-        U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
-        U+2113, U+2C60-2C7F, U+A720-A7FF;
+    src: url('/fonts/beeraw-mono.woff2') format('woff2');
 }
 
 /* ------------------------------------------------------------------ tokens */
@@ -105,37 +94,51 @@
 :root {
     color-scheme: light dark;
 
-    --canvas: light-dark(#f5f6f8, #0d131f);
-    --surface: light-dark(#ffffff, #141c2b);
-    --sunken: light-dark(#fafbfc, #111827);
-    --raised: light-dark(#ffffff, #1a2436);
-    --line: light-dark(#e2e6ec, #25314a);
-    --line-strong: light-dark(#cdd4de, #33415e);
+    --canvas: light-dark(#f3f3f2, #141210);
+    --surface: light-dark(#ffffff, #1d1a17);
+    --sunken: light-dark(#f7f6f4, #191714);
+    --raised: light-dark(#ffffff, #24201c);
+    --line: light-dark(#ebe9e6, #2a2622);
+    --line-strong: light-dark(#d6d3ce, #3a342e);
+    /* The edge of a field has to be seen, which a hairline does not do. */
+    --field-line: light-dark(#8a847c, #8f877c);
 
-    --ink: light-dark(#16202f, #e7ecf5);
-    --ink-soft: light-dark(#4a5666, #a6b2c6);
-    --ink-faint: light-dark(#7a8494, #77869e);
+    --ink: light-dark(#1a1612, #f3efe9);
+    --ink-soft: light-dark(#4a453f, #cfc7bb);
+    --ink-faint: light-dark(#5f5a54, #a89f94);
 
-    --rail: light-dark(#1b2a4a, #0a1120);
-    --rail-raised: light-dark(#24365c, #1b2a4a);
-    --rail-ink: #e7ecf5;
-    --rail-faint: light-dark(#93a1bd, #8394b3);
+    /* The rail is the insect's orange in both themes, with near-black ink on
+       it: the one ground in the interface that does not turn over. */
+    --rail: light-dark(#de8a2a, #e79b46);
+    --rail-raised: rgb(26 18 8 / 12%);
+    --rail-current: #1a1208;
+    --rail-ink: #1a1208;
+    --rail-faint: #3d2a12;
 
-    --button-fill: light-dark(#1b2a4a, #2e4477);
-    --button-fill-hover: light-dark(#24365c, #3a548f);
+    --button-fill: light-dark(#de8a2a, #e79b46);
+    --button-fill-hover: light-dark(#c97a1f, #f0a959);
 
     --accent: light-dark(#de8a2a, #e79b46);
-    --on-accent: #1b2a4a;
+    --on-accent: #1a1208;
+    /* The orange that can be written: the fill falls under 4.5:1 on white. */
+    --accent-ink: light-dark(#9a5300, #f0a959);
 
-    --status-todo: light-dark(#6b7684, #8b95a5);
-    --status-in_progress: light-dark(#1f6f8b, #4fa8c7);
-    --status-blocked: light-dark(#a33a3a, #d97070);
-    --status-done: light-dark(#4a7a52, #78ad82);
+    --status-todo: light-dark(#8a847c, #a89f94);
+    --status-in_progress: light-dark(#de8a2a, #e79b46);
+    --status-blocked: light-dark(#c2392b, #e5604f);
+    --status-done: light-dark(#3f8452, #6fb07c);
 
-    --tint-todo: light-dark(#f0f1f3, #1c2434);
-    --tint-in_progress: light-dark(#e6f1f5, #152a35);
-    --tint-blocked: light-dark(#f8eaea, #301c1e);
-    --tint-done: light-dark(#eaf2ea, #16291c);
+    --tint-todo: light-dark(#f0eeeb, #24201c);
+    --tint-in_progress: light-dark(#fbebd5, #33261a);
+    --tint-blocked: light-dark(#f8e3df, #3a201b);
+    --tint-done: light-dark(#e3f1e6, #1c2a20);
+
+    /* The ground of a status banner: the status colour, deep enough to carry
+       white text. In progress keeps its orange and takes the rail's ink. */
+    --banner-todo: light-dark(#6b665f, #5c5650);
+    --banner-in_progress: light-dark(#de8a2a, #e79b46);
+    --banner-blocked: light-dark(#b3321f, #b8432f);
+    --banner-done: light-dark(#3f8452, #3d7a4c);
 
     /*
      * Type. The base is 15px. The old 13.5 was a bet on density that the eye
@@ -156,7 +159,8 @@
     --text-ui: 0.875rem;        /* 14px   — controls, buttons, list rows */
     --text-body: 0.9375rem;     /* 15px   — the base */
     --text-lead: 1rem;          /* 16px   — description prose, card titles */
-    --text-title: 1.375rem;     /* 22px   — the one heading per screen */
+    --text-title: 1.75rem;      /* 28px   — the one heading per screen, phone */
+    --text-display: 2.125rem;   /* 34px   — the same heading with room */
 
     /* Space. Seven steps, and nothing between them. Unchanged: the type grew,
        the air around it did not, which is how the screen keeps its density. */
@@ -170,13 +174,13 @@
 
     /* Fixed measures. The row height is the density decision made numeric: 38px
        holds a 14px line, a 16px chip and 12px of air, and no less. */
-    --row-h: 2.375rem;      /* 38px */
-    --head-h: 2.125rem;     /* 34px */
+    --row-h: 2.625rem;      /* 42px */
+    --head-h: 2.25rem;      /* 36px */
     --topbar-h: 3rem;       /* 48px */
     --touch-h: 2.75rem;     /* 44px */
-    --rail-w: 13.75rem;     /* 220px — 15px labels need the extra 12 */
-    --rail-w-narrow: 3.25rem;
-    --gutter-w: 3px;        /* the alert stripe down the left of a row */
+    --rail-w: 14.5rem;      /* 232px — the longest project names in the pins */
+    --rail-w-narrow: 3.75rem;
+    --square: 0.6875rem;    /* 11px — the status mark */
 
     /*
      * Anything that gets pressed is sized by the pointer, not by the viewport.
@@ -186,11 +190,13 @@
      */
     --control-h: var(--touch-h);
 
-    --radius: 0.2rem;
-    --shadow: 0 1px 2px light-dark(rgb(16 25 46 / 6%), rgb(0 0 0 / 30%));
-    --shadow-pop: 0 6px 20px light-dark(rgb(16 25 46 / 14%), rgb(0 0 0 / 45%));
+    --radius: 0.375rem;
+    --shadow: 0 1px 2px light-dark(rgb(26 18 8 / 6%), rgb(0 0 0 / 30%));
+    --shadow-pop: 0 12px 32px light-dark(rgb(26 18 8 / 18%), rgb(0 0 0 / 50%));
 
-    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --sans: 'beeraw text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --head: 'beeraw head', 'beeraw text', system-ui, sans-serif;
+    --mono: 'beeraw mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 @media (pointer: fine) {
@@ -214,7 +220,7 @@ body {
     margin: 0;
     background: var(--canvas);
     color: var(--ink);
-    font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: var(--sans);
     font-size: var(--text-body);
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
@@ -226,9 +232,14 @@ h1, h2, h3 {
     font-weight: 700;
 }
 
+/* One heading per screen, in the heading face, heavy and set tight: it is the
+   name of the place, and the trail above already says how one got there. */
 h1 {
+    font-family: var(--head);
     font-size: var(--text-title);
-    letter-spacing: -0.01em;
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
 }
 
 /* Every section heading below the page title is an eyebrow, not a headline:
@@ -357,10 +368,8 @@ body.is-locked {
     flex-direction: column;
 }
 
-/* Room for the tab bar at the bottom, which is fixed and would otherwise sit
-   on top of the last row of the list. */
 .page {
-    padding: var(--space-5) var(--space-5) calc(3.75rem + var(--space-7));
+    padding: var(--space-6) var(--space-5) 2.5rem;
 }
 
 /* -------------------------------------------------------------------- rail */
@@ -384,20 +393,31 @@ body.is-locked {
     box-shadow: 0 0 40px rgb(0 0 0 / 35%);
 }
 
+/* On the orange the focus ring is drawn in the rail's ink: an orange ring on
+   an orange ground would be no ring at all. */
+.rail :focus-visible {
+    outline-color: var(--rail-ink);
+}
+
 .rail-brand {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: 0 var(--space-5) var(--space-5);
+    padding: 0 var(--space-5) var(--space-6);
     color: var(--rail-ink);
-    font-size: 1.0625rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-family: var(--head);
+    font-size: 1.1875rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     text-decoration: none;
     white-space: nowrap;
 }
 
-.rail-brand img {
+.rail-brand:hover {
+    color: var(--rail-ink);
+}
+
+.rail-brand svg {
     flex: none;
 }
 
@@ -417,6 +437,7 @@ body.is-locked {
     border-radius: var(--radius);
     color: var(--rail-ink);
     font-size: var(--text-body);
+    font-weight: 500;
     text-decoration: none;
     white-space: nowrap;
 }
@@ -426,11 +447,16 @@ body.is-locked {
     color: var(--rail-ink);
 }
 
-/* The current page is marked by weight and by a filled ground, not by the
-   accent: the orange is spent on the mark and the focus ring alone. */
-.rail-nav a[aria-current='page'] {
-    background: var(--rail-raised);
+/* The current page is the one dark block on the orange. */
+.rail-nav a[aria-current='page'],
+.rail-nav a[aria-current='page']:hover {
+    background: var(--rail-current);
+    color: #fff;
     font-weight: 700;
+}
+
+.rail-nav a[aria-current='page']:focus-visible {
+    outline-offset: 3px;
 }
 
 .rail-nav svg {
@@ -448,8 +474,8 @@ body.is-locked {
 .rail-section-title {
     margin: 0 0 var(--space-3);
     font-size: var(--text-micro);
-    font-weight: 700;
-    letter-spacing: 0.09em;
+    font-weight: 800;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--rail-faint);
 }
@@ -468,7 +494,7 @@ body.is-locked {
     padding: 0 var(--space-2);
     margin: 0 calc(var(--space-2) * -1);
     border-radius: var(--radius);
-    color: var(--rail-faint);
+    color: var(--rail-ink);
     font-size: var(--text-meta);
     text-decoration: none;
 }
@@ -476,6 +502,10 @@ body.is-locked {
 .rail-pin:hover {
     background: var(--rail-raised);
     color: var(--rail-ink);
+}
+
+.rail-pin-count {
+    font-weight: 700;
 }
 
 .rail-pin-name {
@@ -490,23 +520,25 @@ body.is-locked {
 }
 
 /* A pinned project with a blocked ticket shows it here, so the alert reaches
-   the eye from any screen and not only from the dashboard. */
+   the eye from any screen and not only from the dashboard. Only then: a mark on
+   every pin would say nothing. The square is a deep red, since the status red
+   all but vanishes on the orange. */
 .rail-pin-dot {
-    width: 5px;
-    height: 5px;
-    flex: none;
-    border-radius: 50%;
-    background: var(--status-todo);
+    display: none;
 }
 
 .rail-pin-dot.is-blocked {
-    background: var(--status-blocked);
+    display: block;
+    width: var(--square);
+    height: var(--square);
+    flex: none;
+    background: #7a1a0f;
 }
 
 .rail-foot {
     margin-top: auto;
     padding: var(--space-4) var(--space-5) 0;
-    border-top: 1px solid var(--rail-raised);
+    border-top: 1px solid rgb(26 18 8 / 25%);
     display: flex;
     align-items: center;
     gap: var(--space-3);
@@ -533,7 +565,7 @@ body.is-locked {
     border: 0;
     border-radius: var(--radius);
     background: transparent;
-    color: var(--rail-faint);
+    color: var(--rail-ink);
     cursor: pointer;
 }
 
@@ -556,58 +588,12 @@ body.is-locked {
     border: 0;
     border-radius: var(--radius);
     background: transparent;
-    color: var(--rail-faint);
+    color: var(--rail-ink);
     cursor: pointer;
 }
 
-/* ------------------------------------------------------------------ tabbar */
-
-/*
- * The destinations under the thumb. What the rail carries besides them — the
- * pinned projects, the session — would not fit here, so the rail itself becomes
- * the drawer this bar opens rather than being dropped.
- */
-.tabbar {
-    display: flex;
-    position: fixed;
-    inset: auto 0 0;
-    z-index: 12;
-    border-top: 1px solid var(--line);
-    background: var(--surface);
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-.tabbar-nav {
-    flex: 1;
-    display: flex;
-}
-
-.tabbar a,
-.tabbar-menu {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    height: 3.75rem;
-    border: 0;
-    background: transparent;
-    color: var(--ink-faint);
-    font-size: var(--text-small);
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.tabbar-menu {
-    flex: none;
-    width: 5.25rem;
-    border-left: 1px solid var(--line);
-}
-
-.tabbar a[aria-current='page'] {
-    background: var(--sunken);
-    color: var(--ink);
+.drawer-close:hover {
+    background: var(--rail-raised);
 }
 
 /* ------------------------------------------------------------------ topbar */
@@ -788,10 +774,9 @@ body.is-locked {
 
 .flash::before {
     content: '';
-    width: 6px;
-    height: 6px;
+    width: var(--square);
+    height: var(--square);
     flex: none;
-    border-radius: 50%;
     background: currentcolor;
 }
 
@@ -822,9 +807,9 @@ body.is-locked {
 }
 
 .page-head p {
-    margin: 2px 0 0;
+    margin: var(--space-1) 0 0;
     color: var(--ink-faint);
-    font-size: var(--text-meta);
+    font-size: var(--text-body);
 }
 
 .page-head-actions {
@@ -841,14 +826,18 @@ body.is-locked {
 }
 
 .page-path {
-    margin: 2px 0 0;
+    margin: var(--space-1) 0 0;
     max-width: 40rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: var(--mono);
-    font-size: var(--text-tiny);
+    font-size: var(--text-small);
     color: var(--ink-faint);
+}
+
+.page-head .page-path {
+    font-size: var(--text-small);
 }
 
 /*
@@ -856,9 +845,9 @@ body.is-locked {
  * and no more prominence: it is context for the list below, not the heading.
  */
 .page-head-description {
-    margin: var(--space-2) 0 0;
-    max-width: 40rem;
-    font-size: var(--text-small);
+    margin: var(--space-3) 0 0;
+    max-width: 44rem;
+    font-size: var(--text-body);
     color: var(--ink-soft);
 }
 
@@ -892,9 +881,7 @@ body.is-locked {
  */
 .grid {
     container-type: inline-size;
-    border: 1px solid var(--line);
-    border-left: 0;
-    border-right: 0;
+    border: 0;
     border-radius: 0;
     margin: 0 calc(var(--space-5) * -1);
     background: var(--surface);
@@ -913,7 +900,6 @@ body.is-locked {
     row-gap: 3px;
     align-items: baseline;
     border-bottom: 1px solid var(--line);
-    border-left: var(--gutter-w) solid transparent;
     text-decoration: none;
     color: inherit;
 }
@@ -927,11 +913,18 @@ body.is-locked {
     color: inherit;
 }
 
-/* The gutter is the answer to "which project is in trouble?". It is a stripe,
-   not a colour on the text: it survives at a glance across thirty rows, and it
-   reads as a mark in the margin rather than as an error state on the row. */
-.grid-row.is-blocked {
-    border-left-color: var(--status-blocked);
+/* "Which project is in trouble?" A red square before the name, the same mark
+   the status column uses for a blocked ticket: it survives at a glance across
+   thirty rows without turning the whole row into an error state. A ticket row
+   needs nothing more — its status cell already says it. */
+.grid-projects .grid-row.is-blocked .c-name::before {
+    content: '';
+    display: inline-block;
+    width: var(--square);
+    height: var(--square);
+    margin-right: var(--space-3);
+    background: var(--status-blocked);
+    vertical-align: 0.05em;
 }
 
 /* Archived and closed rows stay in the list at full contrast. Dimming them cost
@@ -990,8 +983,15 @@ body.is-locked {
 .c-key {
     font-family: var(--mono);
     font-size: var(--text-small);
-    font-weight: 700;
+    font-weight: 500;
     letter-spacing: -0.01em;
+    color: var(--ink-faint);
+}
+
+.c-name,
+.c-title,
+.c-label {
+    font-weight: 600;
 }
 
 .c-path,
@@ -1004,10 +1004,7 @@ body.is-locked {
 }
 
 .c-type {
-    font-size: var(--text-micro);
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    font-size: var(--text-meta);
     color: var(--ink-faint);
 }
 
@@ -1037,12 +1034,11 @@ body.is-locked {
     font-weight: 700;
 }
 
-/* The rule crosses out the title without taking ink from it. Now that the row
-   is no longer dimmed, the border colour was too faint to read as a mark. */
+/* A closed ticket keeps its title whole and steps back to the secondary ink:
+   the green square in its status cell already says it is done, and a rule
+   through the words made them harder to read for nothing. */
 .c-title.is-closed {
-    text-decoration: line-through;
-    text-decoration-color: var(--ink-faint);
-    text-decoration-thickness: 1px;
+    color: var(--ink-faint);
 }
 
 .c-actor {
@@ -1098,10 +1094,47 @@ body.is-locked {
     background: var(--badge-tint, var(--sunken));
 }
 
-.badge-todo { --badge-color: var(--status-todo); --badge-tint: var(--tint-todo); }
-.badge-in_progress { --badge-color: var(--status-in_progress); --badge-tint: var(--tint-in_progress); }
-.badge-blocked { --badge-color: var(--status-blocked); --badge-tint: var(--tint-blocked); }
-.badge-done { --badge-color: var(--status-done); --badge-tint: var(--tint-done); }
+/*
+ * A status is a square of colour and its word in plain ink: no pill, no tinted
+ * ground. The word is read, the square is scanned — and the square holds in
+ * black and white too, since to do is hollow and the other three are filled at
+ * three different lightnesses. The same classes dress the list, the ticket and
+ * the options of the status filter, which the script builds from them.
+ */
+.badge-todo,
+.badge-in_progress,
+.badge-blocked,
+.badge-done {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0;
+    background: none;
+    color: var(--ink);
+    font-size: var(--text-meta);
+    font-weight: 600;
+}
+
+.badge-todo::before,
+.badge-in_progress::before,
+.badge-blocked::before,
+.badge-done::before {
+    content: '';
+    width: var(--square);
+    height: var(--square);
+    flex: none;
+    background: var(--badge-color);
+}
+
+.badge-todo { --badge-color: var(--status-todo); }
+.badge-in_progress { --badge-color: var(--status-in_progress); }
+.badge-blocked { --badge-color: var(--status-blocked); }
+.badge-done { --badge-color: var(--status-done); }
+
+.badge-todo::before {
+    background: transparent;
+    border: 2px solid var(--status-todo);
+}
 
 .badge-plain {
     background: transparent;
@@ -1120,10 +1153,21 @@ body.is-locked {
 }
 
 .badge-alert {
-    --badge-color: var(--status-blocked);
-    --badge-tint: transparent;
-    border: 1px solid var(--status-blocked);
-    font-size: var(--text-micro);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0;
+    background: none;
+    color: var(--ink);
+    font-size: var(--text-small);
+}
+
+.badge-alert::before {
+    content: '';
+    width: var(--square);
+    height: var(--square);
+    flex: none;
+    background: var(--status-blocked);
 }
 
 /* ------------------------------------------------------------------ actors */
@@ -1361,6 +1405,17 @@ textarea {
     font-size: var(--text-ui);
 }
 
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='date'],
+input[type='search'],
+select,
+textarea,
+.dropdown-button {
+    border-color: var(--field-line);
+}
+
 textarea {
     height: auto;
     min-height: 5.5rem;
@@ -1386,7 +1441,7 @@ textarea:disabled {
 
 input[type='checkbox'],
 input[type='radio'] {
-    accent-color: var(--button-fill);
+    accent-color: var(--accent);
     width: 1.125rem;
     height: 1.125rem;
     margin: 0;
@@ -1461,7 +1516,7 @@ fieldset {
     border: 1px solid var(--button-fill);
     border-radius: var(--radius);
     background: var(--button-fill);
-    color: #fff;
+    color: var(--on-accent);
     font-size: var(--text-ui);
     font-weight: 700;
     cursor: pointer;
@@ -1472,13 +1527,14 @@ fieldset {
 .button:hover {
     background: var(--button-fill-hover);
     border-color: var(--button-fill-hover);
-    color: #fff;
+    color: var(--on-accent);
 }
 
 .button-quiet {
     background: var(--surface);
     border-color: var(--line-strong);
     color: var(--ink);
+    font-weight: 600;
 }
 
 .button-quiet:hover {
@@ -1510,9 +1566,14 @@ fieldset {
     padding: 0;
     border: 0;
     background: none;
-    color: var(--ink-soft);
-    font-size: var(--text-small);
+    color: var(--accent-ink);
+    font-size: var(--text-ui);
+    font-weight: 700;
     cursor: pointer;
+    text-decoration: none;
+}
+
+.link-button:hover {
     text-decoration: underline;
     text-underline-offset: 2px;
 }
@@ -1769,51 +1830,279 @@ fieldset {
     }
 }
 
+/* The key above the heading, and the heading on a line of its own: a long
+   title wraps under itself rather than under a key. */
+.ticket-head {
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    max-width: 55rem;
+}
+
 .ticket-head h1 {
-    max-width: 56rem;
     text-wrap: pretty;
 }
 
-.ticket-head .badge {
-    margin-top: 4px;
+/*
+ * The status banner. A <details>: its summary is the banner, its body the form
+ * that changes the status, opened over the page under the banner. Each status
+ * has its own ground — the in-progress orange takes the rail's ink, the three
+ * others are deep enough to carry white.
+ */
+.status-banner {
+    position: relative;
+    max-width: 55rem;
+    margin-bottom: var(--space-4);
+}
+
+.status-banner > summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius);
+    background: var(--banner-color);
+    color: #fff;
+    list-style: none;
+    cursor: pointer;
+}
+
+.status-banner > summary::-webkit-details-marker {
+    display: none;
+}
+
+.status-banner-todo { --banner-color: var(--banner-todo); }
+.status-banner-in_progress { --banner-color: var(--banner-in_progress); }
+.status-banner-blocked { --banner-color: var(--banner-blocked); }
+.status-banner-done { --banner-color: var(--banner-done); }
+
+.status-banner-in_progress > summary {
+    color: var(--on-accent);
+}
+
+.status-banner-state {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.status-banner-state::before {
+    content: '';
+    width: var(--square);
+    height: var(--square);
     flex: none;
-    padding: 2px 9px;
-    font-size: var(--text-small);
+    background: currentcolor;
+}
+
+.status-banner-since {
+    font-size: var(--text-ui);
+}
+
+.status-banner-action {
+    margin-left: auto;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-banner-action::after {
+    content: ' ▾';
+}
+
+.status-banner[open] .status-banner-action::after {
+    content: ' ▴';
+}
+
+.status-banner > summary:focus-visible {
+    outline-color: var(--ink);
+    outline-offset: 3px;
+}
+
+.status-popover {
+    margin-top: var(--space-2);
+    padding: var(--space-5) var(--space-6);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow-pop);
+}
+
+/* With room, the form opens over the page under its banner, on the side of the
+   control that opened it, and nothing below it moves. On a phone it pushes the
+   page down instead: an overlay there would cover the whole screen anyway. */
+@media (min-width: 43.75rem) {
+    .status-popover {
+        position: absolute;
+        z-index: 15;
+        top: 100%;
+        right: 0;
+        width: 26rem;
+    }
+}
+
+/* The resolution follows its status in the list, as words rather than a
+   second chip. */
+.c-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.c-status .badge-plain {
+    padding: 0;
+    border: 0;
+    font-family: var(--sans);
+    font-size: var(--text-meta);
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--ink-faint);
+}
+
+.c-status .badge-plain::before {
+    content: '· ';
+}
+
+/* The metadata on one line under the banner, each value after its label. */
+.ticket-meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4) var(--space-6);
+    max-width: 55rem;
+    margin-bottom: var(--space-6);
+}
+
+.ticket-meta {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+    margin: 0;
+    font-size: var(--text-ui);
+}
+
+.ticket-meta > div {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+}
+
+.ticket-meta dt {
+    color: var(--ink-faint);
+}
+
+.ticket-meta dd {
+    margin: 0;
+    color: var(--ink);
+}
+
+/* "Edit the ticket": the summary is the button, the body a dialog over the
+   page. A script closes it on Escape and on a press outside it. */
+.ticket-edit > summary {
+    list-style: none;
+}
+
+.ticket-edit > summary::-webkit-details-marker {
+    display: none;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgb(20 16 12 / 50%);
+}
+
+.modal {
+    position: fixed;
+    z-index: 41;
+    top: var(--space-6);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(42.5rem, calc(100vw - 2 * var(--space-5)));
+    max-height: calc(100dvh - 2 * var(--space-6));
+    overflow-y: auto;
+    padding: var(--space-6) var(--space-7);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow-pop);
+}
+
+.modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-5);
+}
+
+.modal-head h2 {
+    font-family: var(--head);
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    color: var(--ink);
+}
+
+.form-pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 0 var(--space-6);
+    margin-top: var(--space-4);
+}
+
+.form-pair > .field {
+    margin-top: 0;
 }
 
 .ticket-detail {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-7);
-    align-items: start;
+    max-width: 55rem;
 }
 
 .ticket-main {
     min-width: 0;
 }
 
-.ticket-aside {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-7);
-}
-
-/* The reading measure is capped here rather than on the shell: this is the one
-   block on the screen where a 1900px line would actually hurt. */
+/* The reading measure: this is the one block on the screen where a 1900px line
+   would actually hurt. The description sits on its own surface, the page's
+   main text. */
 .ticket-description {
-    max-width: 47.5rem;
-    margin-bottom: 1.625rem;
-    color: var(--ink-soft);
+    margin-bottom: var(--space-6);
+    padding: var(--space-5) var(--space-6);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
     font-size: var(--text-lead);
     line-height: 1.65;
 }
 
+.ticket-description .help {
+    font-size: var(--text-lead);
+}
+
+.ticket-attachments {
+    margin-bottom: var(--space-7);
+}
+
+/* A section is named by an eyebrow in the orange that can be written, over a
+   rule of the orange that cannot. */
 .section-head {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
     gap: var(--space-4);
     margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 2px solid var(--accent);
+}
+
+.section-head h2 {
+    color: var(--accent-ink);
+    font-size: var(--text-small);
+    font-weight: 800;
+    letter-spacing: 0.1em;
 }
 
 .section-head span {
@@ -1822,8 +2111,7 @@ fieldset {
 }
 
 .ticket-comment-form {
-    margin-top: 1.625rem;
-    max-width: 51rem;
+    margin-top: var(--space-7);
 }
 
 /* Editing a ticket by hand is the exception — the agents do it — so the form
@@ -1884,83 +2172,26 @@ fieldset {
     border-top: 1px solid var(--line);
 }
 
-.meta-list {
-    margin: 0;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-3) var(--space-5);
-    align-items: baseline;
-    padding: var(--space-4) var(--space-5);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--surface);
-    font-size: var(--text-ui);
-}
-
-.meta-list dt {
-    color: var(--ink-faint);
-    font-size: var(--text-small);
-}
-
-.meta-list dd {
-    margin: 0;
-    color: var(--ink);
-}
-
 /* ---------------------------------------------------------------- timeline */
 
 /*
  * Two natures of entry share one chronology, and they are not given equal
  * weight. A comment is a body of text and gets a surface to sit on; a status
  * change is one line and gets no container at all — a box around six words
- * would make the log look busier than the discussion. The rail dot separates
- * them again: filled for a comment, hollow for a change.
+ * would make the log look busier than the discussion.
  */
 .timeline {
     margin: 0;
-    padding: 0 0 0 1.125rem;
-    border-left: 1px solid var(--line);
+    padding: 0;
     list-style: none;
-    max-width: 51rem;
 }
 
 .timeline > li {
-    position: relative;
     padding-bottom: var(--space-5);
 }
 
 .timeline > li:last-child {
     padding-bottom: 0;
-}
-
-/* The dot is centred on the rail rather than offset by a hand-counted amount:
-   the padding takes it back to the border box, the half pixel to the middle of
-   the 1px rule, and the translation does the rest. */
-.timeline > li::before {
-    content: '';
-    position: absolute;
-    left: calc(-1.125rem - 0.5px);
-    transform: translateX(-50%);
-    width: 7px;
-    height: 7px;
-    border: 1px solid var(--line-strong);
-    border-radius: 50%;
-    background: var(--canvas);
-}
-
-/* Scoped through the list like the rule above, and not on the class alone: a
-   bare .timeline-comment::before weighs less than .timeline > li::before, so
-   the whole variant — diameter, fill, border — silently lost to the default. */
-.timeline > .timeline-change::before {
-    top: 0.5625rem;
-}
-
-.timeline > .timeline-comment::before {
-    top: 0.4375rem;
-    width: 9px;
-    height: 9px;
-    border-color: var(--ink-faint);
-    background: var(--ink-faint);
 }
 
 .timeline-change {
@@ -1983,8 +2214,11 @@ fieldset {
 }
 
 .timeline-changes .from {
-    text-decoration: line-through;
     color: var(--ink-faint);
+}
+
+.timeline-changes strong {
+    color: var(--ink);
 }
 
 .timeline-changes .to {
@@ -2011,12 +2245,19 @@ fieldset {
     font-size: var(--text-small);
 }
 
-.timeline-body {
-    padding: var(--space-4) var(--space-5);
-    border: 1px solid var(--line);
+.timeline-comment {
+    padding: var(--space-4) var(--space-6) var(--space-5);
     border-radius: var(--radius);
     background: var(--surface);
-    color: var(--ink-soft);
+}
+
+.timeline > .timeline-comment {
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-6);
+}
+
+.timeline-body {
+    color: var(--ink);
     font-size: var(--text-body);
     line-height: 1.6;
 }
@@ -2078,102 +2319,147 @@ fieldset {
 
 .prose blockquote {
     margin: 0 0 var(--space-4);
-    padding-left: var(--space-4);
-    border-left: 2px solid var(--line-strong);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
+    background: var(--sunken);
     color: var(--ink-soft);
+    font-style: italic;
 }
 
 /* -------------------------------------------------------------- api tokens */
 
 /*
- * The plain token is shown once and never again. It gets the accent — the only
- * screen besides the mark and the focus ring where the orange is spent — a
- * heading that says what to do, and no competing action next to it.
+ * The plain token is shown once and never again. It is the one block of the
+ * page on the orange itself, with a heading that says what to do and no
+ * competing action next to it.
  */
 .token-reveal {
     margin: 0 0 var(--space-6);
     padding: var(--space-5) var(--space-6);
-    border: 1px solid var(--accent);
-    border-left-width: var(--gutter-w);
     border-radius: var(--radius);
-    background: var(--surface);
+    background: var(--accent);
+    color: var(--on-accent);
 }
 
 .token-reveal-warning {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    margin: 0 0 var(--space-2);
+    margin: 0 0 var(--space-3);
     font-size: var(--text-lead);
-    font-weight: 700;
-}
-
-.token-reveal-warning::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    flex: none;
-    border-radius: 50%;
-    background: var(--accent);
+    font-weight: 800;
 }
 
 .token-reveal-value {
     display: block;
     overflow-wrap: anywhere;
     padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--line);
     border-radius: var(--radius);
-    background: var(--sunken);
+    background: rgb(255 255 255 / 60%);
+    color: var(--on-accent);
     font-family: var(--mono);
-    font-size: var(--text-ui);
+    font-size: var(--text-lead);
     user-select: all;
 }
 
 .token-reveal .help {
     margin-top: var(--space-3);
+    color: var(--on-accent);
+}
+
+.c-scopes span {
+    font-size: var(--text-tiny);
 }
 
 /* ------------------------------------------------------------------- login */
 
+/* The insect on the orange, beside the form on a phone it sits above it. */
 .login {
     display: flex;
+    flex-direction: column;
     min-height: 100dvh;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-6);
-}
-
-.login-inner {
-    width: 100%;
-    max-width: 22.5rem;
 }
 
 .login-brand {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    margin: 0 0 var(--space-7);
-    font-size: 1.3125rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    gap: var(--space-4);
+    margin: 0;
+    padding: var(--space-6);
+    background: var(--rail);
+    color: var(--rail-ink);
+    font-family: var(--head);
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.login-brand svg {
+    width: 3rem;
+    height: 3rem;
+    flex: none;
+}
+
+.login-inner {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-7) var(--space-5);
+}
+
+.login-form {
+    width: 100%;
+    max-width: 24rem;
+}
+
+.login-form h1 {
+    margin-bottom: var(--space-6);
 }
 
 .login-card {
-    padding: var(--space-6);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--surface);
+    padding: 0;
 }
 
 .login-alert {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
     margin: 0 0 var(--space-5);
     padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--status-blocked);
-    border-left-width: var(--gutter-w);
     border-radius: var(--radius);
     background: var(--tint-blocked);
-    color: var(--status-blocked);
+    color: var(--ink);
     font-size: var(--text-ui);
+    font-weight: 600;
+}
+
+.login-alert::before {
+    content: '';
+    width: var(--square);
+    height: var(--square);
+    flex: none;
+    background: var(--status-blocked);
+}
+
+@media (min-width: 56rem) {
+    .login {
+        flex-direction: row;
+    }
+
+    .login-brand {
+        width: 36%;
+        max-width: 32.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: var(--space-6);
+        padding: 0 4rem;
+        font-size: 2.75rem;
+    }
+
+    .login-brand svg {
+        width: 7.5rem;
+        height: 7.5rem;
+    }
 }
 
 .login-card .toggle {
@@ -2189,7 +2475,7 @@ fieldset {
 /* ============================================ 43.75rem / 700px — navigation */
 
 /*
- * The drawer becomes a rail and the tab bar leaves. Nothing else moves: the
+ * The drawer becomes a rail and its button leaves. Nothing else moves: the
  * list is still a card list, the filters are still a sheet. This breakpoint is
  * about where the destinations live, and about nothing else.
  */
@@ -2246,10 +2532,14 @@ fieldset {
         height: 2.25rem;
     }
 
-    .tabbar,
+    .topbar-menu,
     .drawer-backdrop,
     .drawer-close {
         display: none;
+    }
+
+    h1 {
+        font-size: var(--text-display);
     }
 
     /* The toggle appears with the rail it folds, and only one of its two
@@ -2260,7 +2550,7 @@ fieldset {
     }
 
     .page {
-        padding: var(--space-6) var(--space-7) 2.5rem;
+        padding: var(--space-7) 2rem 2.5rem;
     }
 
     .page-head {
@@ -2271,7 +2561,6 @@ fieldset {
     }
 
     .grid {
-        border: 1px solid var(--line);
         border-radius: var(--radius);
         margin: 0;
     }
@@ -2299,7 +2588,7 @@ fieldset {
 
     .grid-head {
         height: var(--head-h);
-        padding: 0 var(--space-4) 0 calc(var(--space-4) + var(--gutter-w));
+        padding: 0 var(--space-4);
         background: var(--sunken);
         border-bottom: 1px solid var(--line);
         font-size: var(--text-micro);
@@ -2408,7 +2697,7 @@ fieldset {
 
     .grid-tickets .grid-head,
     .grid-tickets .grid-row {
-        --cols: 6rem minmax(9rem, 1fr) 5.125rem 6.125rem 2rem 9.75rem;
+        --cols: 6rem minmax(9rem, 1fr) 5.125rem 9.5rem 2rem 9.75rem;
     }
 
     .grid-tokens .grid-head,
@@ -2509,7 +2798,7 @@ fieldset {
 
     .grid-tickets .grid-head,
     .grid-tickets .grid-row {
-        --cols: 6rem minmax(14rem, 1fr) 5.125rem 6.125rem 10.5rem 9.75rem;
+        --cols: 6rem minmax(14rem, 1fr) 5.125rem 9.5rem 10.5rem 9.75rem;
     }
 
     /* The scope column is the one that must never be cut — a scope truncated to
@@ -2533,26 +2822,13 @@ fieldset {
     }
 }
 
-/* ========================================== 75rem / 1200px — the aside */
+/* ============================================ 75rem / 1200px — the rail */
 
 /*
- * The rail unfolds, and the ticket screen gets its column of metadata back.
- * Nothing happens to the lists here: they answer to their own box.
+ * The rail unfolds. Nothing happens to the lists here: they answer to their
+ * own box. The filter bar has its own block, further down.
  */
 @media (min-width: 75rem) {
-    .ticket-detail {
-        grid-template-columns: minmax(0, 1fr) 20rem;
-    }
-
-    .ticket-aside {
-        position: sticky;
-        top: calc(var(--topbar-h) + var(--space-4));
-    }
-
-    .meta-list dd {
-        text-align: right;
-    }
-
     /* Above 1200px the rail is open unless the reader has folded it. */
     .app:not(.rail-narrow) {
         --rail-current-w: var(--rail-w);
@@ -2582,59 +2858,94 @@ fieldset {
     .app.rail-narrow .rail-toggle-expand { display: flex; }
 }
 
-/* ========================================= 87.5rem / 1400px — results */
+/* ===================================== 75rem / 1200px — the filter bar */
 
 /*
- * Results left, filters right — from 1400px and not from 1200, which is where
- * this rule used to sit. At 1200 the filter card takes a third of the screen
- * and leaves the list 608px, narrower than the card list it replaces, and the
- * columns pay for the card. The sheet costs one line above the
- * results and gives the list the whole width — 932px at 1200, enough for all
- * six columns at their full floors. The column earns its place at 1400, where
- * what is left is still a proper list.
+ * The filters leave the sheet for a bar above the results: one line of
+ * controls over a list that keeps the whole width. A column beside the list
+ * used to take a third of the screen for five fields; a bar costs one row of
+ * height, and four selects, a search and a switch fit on it from 1200px. The
+ * markup already puts the filters first, so the bar is simply where they are.
  *
- * The card is 20rem and not a fraction: a filter form has a width it wants, and
- * on a 2560px screen a third of the screen would be a third of nothing.
+ * The help texts stay in the document for a screen reader and leave the
+ * screen: under a field fifteen rems wide they wrapped the bar to three lines.
  */
-@media (min-width: 87.5rem) {
-    .results {
-        grid-template-columns: minmax(0, 1fr) 20rem;
-    }
-
-    /* The markup puts the filters first so a single column reaches them before
-       a screenful of rows; here they go back to the right-hand column. */
-    .results-main { order: 1; }
-    .results-side { order: 2; }
-
-    /* `inset` before `top`, and not after: the shorthand resets all four sides,
-       so the other order quietly threw the offset away. */
+@media (min-width: 75rem) {
     .results .filters {
-        position: sticky;
-        inset: auto;
-        top: calc(var(--topbar-h) + var(--space-4));
+        position: static;
         max-height: none;
         overflow: visible;
-        padding: var(--space-5);
-        border: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-3) var(--space-5);
+        padding: var(--space-4) var(--space-5);
+        border: 0;
         border-radius: var(--radius);
         box-shadow: none;
         transform: none;
-        inset: auto;
     }
 
     .filters-trigger,
     .filters-scrim,
     .filters-grab,
-    .filters-close {
+    .filters-head {
         display: none;
     }
 
-    /* A card is labelled by an eyebrow; only a sheet introduces itself. */
-    .filters-head strong {
-        font-size: var(--text-small);
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--ink-faint);
+    .filters-body {
+        flex: 1;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .filters-body .field {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .filters-body .field:first-child {
+        flex: 1 1 16rem;
+        max-width: 22rem;
+    }
+
+    .filters-body .field > label {
+        white-space: nowrap;
+    }
+
+    .filters-body .field:first-child > label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .filters-body .select {
+        width: 10.5rem;
+    }
+
+    .filters-body .help {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .filters-body .button-block {
+        width: auto;
+    }
+
+    .filters-summary {
+        margin: 0 0 0 auto;
+        padding: 0;
+        border: 0;
+        white-space: nowrap;
     }
 }
 

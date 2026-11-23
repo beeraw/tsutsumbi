@@ -32,7 +32,7 @@ dashboard:
         projects: "{0}aucun projet|{1}1 projet|]1,Inf[ %count% projets"
         active: "{0}aucun ticket actif|{1}1 ticket actif|]1,Inf[ %count% tickets actifs"
         blocked: "{0}aucun ticket bloqué|{1}1 ticket bloqué|]1,Inf[ %count% tickets bloqués"
-    legend: "Un liseré rouge en gouttière signale un projet qui porte au moins un ticket bloqué. Les projets archivés restent en liste, en retrait."
+    legend: "Un carré rouge devant le nom signale un projet qui porte au moins un ticket bloqué. Les projets archivés restent en liste, en retrait."
     empty:
         title: "Aucun projet suivi."
         body: "Les projets apparaissent seuls : le premier agent qui ouvre un ticket depuis un dépôt crée le projet correspondant. Rien à faire ici."
@@ -171,6 +171,7 @@ ticket:
         change_status: "Changer le statut"
         reopen_or_change: "Rouvrir ou changer la résolution"
         apply: "Appliquer"
+        cancel: "Annuler"
     form:
         title:
             label: "Titre"

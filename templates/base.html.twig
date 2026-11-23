@@ -22,11 +22,11 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0d131f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1d1a17" media="(prefers-color-scheme: dark)">
 
-    <link rel="preload" href="{{ asset('fonts/nunito-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="{{ asset('fonts/jetbrains-mono-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/beeraw-text.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/beeraw-head.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <script src="{{ asset('js/app.js') }}" defer></script>
 </head>
@@ -40,7 +40,7 @@
         <div class="rail-region">
             <aside class="rail" id="rail">
                 <a class="rail-brand" href="{{ path('app_dashboard') }}">
-                    <img src="{{ asset('favicon.svg') }}" alt="" width="24" height="24">
+                    {{ icon.mark(28) }}
                     <span class="rail-label">{{ 'app.name'|trans }}</span>
                 </a>
 
@@ -90,6 +90,13 @@
 
         <div class="main">
             <div class="topbar">
+                {# On a phone the rail is a drawer, and this is what opens it:
+                   the top left corner, where a menu is looked for. #}
+                <button type="button" class="icon-button topbar-menu" aria-controls="rail" aria-expanded="false" data-drawer-open>
+                    {{ icon.menu(20) }}
+                    <span class="visually-hidden">{{ 'app.nav.menu'|trans }}</span>
+                </button>
+
                 {# A toggle has to post the state the reader is actually looking
                    at. With no cookie stored, that state is the stylesheet's
                    call — the viewport for the rail, the system preference for
@@ -155,19 +162,6 @@
             <div class="page">
                 {% block body %}{% endblock %}
             </div>
-        </div>
-
-        {# Below 700px only. The destinations sit under the thumb, and what the
-           rail carries besides them — the pinned projects, the session — is one
-           tap away in the drawer rather than dropped. #}
-        <div class="tabbar">
-            <nav class="tabbar-nav" aria-label="{{ 'app.nav.label'|trans }}">
-                {% include '_partials/nav_links.html.twig' %}
-            </nav>
-            <button type="button" class="tabbar-menu" aria-controls="rail" aria-expanded="false" data-drawer-open>
-                {{ icon.menu(20) }}
-                <span class="rail-label">{{ 'app.nav.menu'|trans }}</span>
-            </button>
         </div>
     </div>
 {% endblock %}

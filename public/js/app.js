@@ -24,12 +24,12 @@
     /* Changing a filter applies it, without hunting for the button. The button
        stays in the markup for anyone without scripting.
 
-       Not below 1400px: down there the form lives in a sheet, and reloading on
+       Not below 1200px: down there the form lives in a sheet, and reloading on
        every change would close it under the finger between two choices. That is
        what its own apply button is for. The width is the one the stylesheet
-       uses to give the filters a column of their own — the two have to agree,
-       or the sheet submits itself shut. */
-    var roomy = window.matchMedia('(min-width: 87.5rem)');
+       uses to lay the filters out as a bar above the list — the two have to
+       agree, or the sheet submits itself shut. */
+    var roomy = window.matchMedia('(min-width: 75rem)');
 
     document.querySelectorAll('form[data-autosubmit]').forEach(function (form) {
         form.querySelectorAll('select, input[type="checkbox"]').forEach(function (field) {
@@ -165,9 +165,8 @@
         });
     }
 
-    /* The phone drawer. The bar below reaches both destinations without any of
-       this; what the drawer adds is the rail's own content — the pinned
-       projects and the session — which has nowhere else to go on a phone. */
+    /* The phone drawer: the rail itself, opened by the menu button of the top
+       bar, with the destinations, the pinned projects and the session. */
     var drawerOpener = document.querySelector('[data-drawer-open]');
 
     if (app && drawerOpener) {
@@ -672,4 +671,59 @@
             });
         });
     });
+
+    /* The status form under the banner and the edit dialog are <details>, so
+       they open and close with no script at all. What the script adds is the
+       way every other overlay here closes: Escape, a press outside, and the
+       cancel control without the reload its link would otherwise cost. Focus
+       goes back to the summary that opened it. */
+    var dismissables = document.querySelectorAll('details[data-dismissable]');
+
+    var dismiss = function (details) {
+        details.open = false;
+        var summary = details.querySelector('summary');
+
+        if (summary) {
+            summary.focus();
+        }
+    };
+
+    dismissables.forEach(function (details) {
+        details.querySelectorAll('[data-dismiss]').forEach(function (control) {
+            control.addEventListener('click', function (event) {
+                event.preventDefault();
+                dismiss(details);
+            });
+        });
+    });
+
+    if (dismissables.length) {
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') {
+                return;
+            }
+
+            dismissables.forEach(function (details) {
+                if (details.open) {
+                    dismiss(details);
+                }
+            });
+        });
+
+        document.addEventListener('click', function (event) {
+            var target = event.target;
+
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            dismissables.forEach(function (details) {
+                /* A press inside a dropdown popup that lives in the form is a
+                   press inside: the popup is a child of the details. */
+                if (details.open && !details.contains(target)) {
+                    details.open = false;
+                }
+            });
+        });
+    }
 })();

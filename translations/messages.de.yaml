@@ -32,7 +32,7 @@ dashboard:
         projects: "{0}kein Projekt|{1}1 Projekt|]1,Inf[ %count% Projekte"
         active: "{0}kein offenes Ticket|{1}1 offenes Ticket|]1,Inf[ %count% offene Tickets"
         blocked: "{0}kein blockiertes Ticket|{1}1 blockiertes Ticket|]1,Inf[ %count% blockierte Tickets"
-    legend: "Ein roter Rand im Bundsteg kennzeichnet ein Projekt mit mindestens einem blockierten Ticket. Archivierte Projekte bleiben in der Liste, zurückgenommen."
+    legend: "Ein rotes Quadrat vor dem Namen kennzeichnet ein Projekt mit mindestens einem blockierten Ticket. Archivierte Projekte bleiben in der Liste, zurückgenommen."
     empty:
         title: "Kein Projekt erfasst."
         body: "Projekte erscheinen von selbst: Der erste Agent, der aus einem Repository ein Ticket öffnet, legt das zugehörige Projekt an. Hier ist nichts zu tun."
@@ -172,6 +172,7 @@ ticket:
         change_status: "Status ändern"
         reopen_or_change: "Wiedereröffnen oder Lösung ändern"
         apply: "Anwenden"
+        cancel: "Abbrechen"
     form:
         title:
             label: "Titel"

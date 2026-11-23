@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% import '_partials/icons.html.twig' as icon %}
+
 {% block title %}{{ ticket.key }} · {{ ticket.title }}{% endblock %}
 
 {% block crumbs %}
@@ -21,7 +23,107 @@
               data-copy-label="{{ 'ticket.action.copy_key'|trans({'%key%': ticket.key}) }}"
               data-copy-done="{{ 'ticket.key.copied'|trans }}">{{ ticket.key }}</span>
         <h1>{{ ticket.title }}</h1>
-        {% include '_partials/status.html.twig' %}
+    </div>
+
+    {# The status is the first thing read after the title, so it is a banner in
+       its own colour rather than a chip beside the heading — and the banner is
+       also the way to change it. The form folds out of it: changing a status by
+       hand is rare enough (the agents do it) not to stand open on every visit,
+       and frequent enough to stay one press away. Reopening is not a separate
+       control: it is a status that leaves "done", and the resolution goes with
+       it. #}
+    {% if ticket.closedAt %}
+        {% set since = ['ticket.column.closed_at'|trans, ticket.closedAt] %}
+    {% elseif ticket.startedAt %}
+        {% set since = ['ticket.column.started_at'|trans, ticket.startedAt] %}
+    {% else %}
+        {% set since = ['ticket.column.created_at'|trans, ticket.createdAt] %}
+    {% endif %}
+
+    <details class="status-banner status-banner-{{ ticket.status.value }}" data-dismissable {{ panel == 'status' ? 'open' : '' }}>
+        <summary>
+            <span class="status-banner-state">
+                {{- ticket.status.translationKey|trans -}}
+                {%- if ticket.resolution %} · {{ ticket.resolution.translationKey|trans }}{% endif -%}
+            </span>
+            <span class="status-banner-since">
+                {{ since[0] }} <time datetime="{{ since[1]|date('c') }}">{{ since[1]|format_datetime('medium', 'short') }}</time>
+            </span>
+            <span class="status-banner-action">
+                {{ (ticket.closed ? 'ticket.action.reopen_or_change' : 'ticket.action.change_status')|trans }}
+            </span>
+        </summary>
+
+        <div class="status-popover">
+            {{ form_start(statusForm) }}
+            {{ form_errors(statusForm) }}
+            {{ form_row(statusForm.status) }}
+            <div data-resolution-field>{{ form_row(statusForm.resolution) }}</div>
+            {{ form_row(statusForm.note) }}
+            <div class="actions">
+                <button type="submit" class="button">{{ 'ticket.action.apply'|trans }}</button>
+            </div>
+            {{ form_end(statusForm) }}
+        </div>
+    </details>
+
+    <div class="ticket-meta-row">
+        <dl class="ticket-meta">
+            <div>
+                <dt>{{ 'ticket.column.type'|trans }}</dt>
+                <dd>{{ ticket.type.translationKey|trans }}</dd>
+            </div>
+            <div>
+                <dt>{{ 'ticket.column.priority'|trans }}</dt>
+                <dd>{{ ticket.priority.translationKey|trans }}</dd>
+            </div>
+            <div>
+                <dt>{{ 'ticket.column.created_by'|trans }}</dt>
+                <dd>{% with {actor: ticket.createdBy} %}{% include '_partials/actor.html.twig' %}{% endwith %}</dd>
+            </div>
+            <div>
+                <dt>{{ 'ticket.column.created_at'|trans }}</dt>
+                <dd>{{ ticket.createdAt|format_datetime('medium', 'short') }}</dd>
+            </div>
+            {% if ticket.startedAt %}
+                <div>
+                    <dt>{{ 'ticket.column.started_at'|trans }}</dt>
+                    <dd>{{ ticket.startedAt|format_datetime('medium', 'short') }}</dd>
+                </div>
+            {% endif %}
+        </dl>
+
+        {# Editing a ticket by hand is the exception — the agents do it — so the
+           form waits behind a button and opens over the page. Without a script
+           the cancel link reloads the page, which closes it all the same. #}
+        <details class="ticket-edit" data-dismissable {{ panel == 'edit' ? 'open' : '' }}>
+            <summary class="button button-quiet">{{ 'ticket.action.edit'|trans }}</summary>
+            <div class="modal-backdrop" data-dismiss></div>
+            <div class="modal" role="dialog" aria-labelledby="ticket-edit-title">
+                <div class="modal-head">
+                    <h2 id="ticket-edit-title">{{ 'ticket.action.edit'|trans }}</h2>
+                    <a class="icon-button" href="{{ path('app_ticket_show', {key: ticket.key}) }}" data-dismiss>
+                        {{ icon.close(18) }}
+                        <span class="visually-hidden">{{ 'ticket.action.cancel'|trans }}</span>
+                    </a>
+                </div>
+                {{ form_start(editForm) }}
+                {{ form_errors(editForm) }}
+                {{ form_row(editForm.title) }}
+                {{ form_row(editForm.description) }}
+                <div class="form-pair">
+                    {{ form_row(editForm.type) }}
+                    {{ form_row(editForm.priority) }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="button">{{ 'ticket.action.save'|trans }}</button>
+                    <a class="button button-quiet" href="{{ path('app_ticket_show', {key: ticket.key}) }}" data-dismiss>
+                        {{ 'ticket.action.cancel'|trans }}
+                    </a>
+                </div>
+                {{ form_end(editForm) }}
+            </div>
+        </details>
     </div>
 
     <div class="ticket-detail">
@@ -31,6 +133,29 @@
                     {{ ticket.description|markdown }}
                 {% else %}
                     <p class="help">{{ 'ticket.no_description'|trans }}</p>
+                {% endif %}
+            </div>
+
+            <div class="ticket-attachments">
+                <div class="section-head">
+                    <h2>{{ 'attachment.section.title'|trans }}</h2>
+                </div>
+                {% if ticket.attachments|length %}
+                    <ul class="attachments">
+                        {% for attachment in ticket.attachments %}
+                            <li>
+                                <a href="{{ path('app_attachment_download', {id: attachment.id}) }}">
+                                    {{ attachment.originalFilename }}
+                                </a>
+                                <span class="help">
+                                    {{ attachment.mimeType }} · {{ (attachment.size / 1024)|round }} Ko ·
+                                    {{ attachment.createdAt|format_datetime('medium', 'short') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty-note">{{ 'attachment.empty'|trans }}</p>
                 {% endif %}
             </div>
 
@@ -102,87 +227,5 @@
                 {{ form_end(commentForm) }}
             </div>
         </div>
-
-        <aside class="ticket-aside">
-            <dl class="meta-list">
-                <dt>{{ 'ticket.column.type'|trans }}</dt>
-                <dd>{{ ticket.type.translationKey|trans }}</dd>
-
-                <dt>{{ 'ticket.column.priority'|trans }}</dt>
-                <dd>{{ ticket.priority.translationKey|trans }}</dd>
-
-                <dt>{{ 'ticket.column.created_by'|trans }}</dt>
-                <dd>{% with {actor: ticket.createdBy} %}{% include '_partials/actor.html.twig' %}{% endwith %}</dd>
-
-                <dt>{{ 'ticket.column.created_at'|trans }}</dt>
-                <dd>{{ ticket.createdAt|format_datetime('medium', 'short') }}</dd>
-
-                {% if ticket.startedAt %}
-                    <dt>{{ 'ticket.column.started_at'|trans }}</dt>
-                    <dd>{{ ticket.startedAt|format_datetime('medium', 'short') }}</dd>
-                {% endif %}
-
-                {% if ticket.closedAt %}
-                    <dt>{{ 'ticket.column.closed_at'|trans }}</dt>
-                    <dd>{{ ticket.closedAt|format_datetime('medium', 'short') }}</dd>
-                {% endif %}
-            </dl>
-
-            {# The status change is the one action taken from this screen often
-               enough to stay open. Reopening is not a separate control: it is a
-               status that leaves "done", and the resolution disappears by
-               itself when it does. #}
-            <div>
-                <div class="section-head">
-                    <h2>{{ (ticket.closed ? 'ticket.action.reopen_or_change' : 'ticket.action.change_status')|trans }}</h2>
-                </div>
-                {{ form_start(statusForm) }}
-                {{ form_errors(statusForm) }}
-                {{ form_row(statusForm.status) }}
-                <div data-resolution-field>{{ form_row(statusForm.resolution) }}</div>
-                {{ form_row(statusForm.note) }}
-                <div class="actions">
-                    <button type="submit" class="button button-quiet">{{ 'ticket.action.apply'|trans }}</button>
-                </div>
-                {{ form_end(statusForm) }}
-            </div>
-
-            <details class="panel" {{ panel == 'edit' ? 'open' : '' }}>
-                <summary>{{ 'ticket.action.edit'|trans }}</summary>
-                {{ form_start(editForm) }}
-                {{ form_errors(editForm) }}
-                {{ form_row(editForm.title) }}
-                {{ form_row(editForm.description) }}
-                {{ form_row(editForm.type) }}
-                {{ form_row(editForm.priority) }}
-                <div class="actions">
-                    <button type="submit" class="button button-quiet">{{ 'ticket.action.save'|trans }}</button>
-                </div>
-                {{ form_end(editForm) }}
-            </details>
-
-            <div>
-                <div class="section-head">
-                    <h2>{{ 'attachment.section.title'|trans }}</h2>
-                </div>
-                {% if ticket.attachments|length %}
-                    <ul class="attachments">
-                        {% for attachment in ticket.attachments %}
-                            <li>
-                                <a href="{{ path('app_attachment_download', {id: attachment.id}) }}">
-                                    {{ attachment.originalFilename }}
-                                </a>
-                                <span class="help">
-                                    {{ attachment.mimeType }} · {{ (attachment.size / 1024)|round }} Ko ·
-                                    {{ attachment.createdAt|format_datetime('medium', 'short') }}
-                                </span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="empty-note">{{ 'attachment.empty'|trans }}</p>
-                {% endif %}
-            </div>
-        </aside>
     </div>
 {% endblock %}

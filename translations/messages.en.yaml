@@ -32,7 +32,7 @@ dashboard:
         projects: "{0}no project|{1}1 project|]1,Inf[ %count% projects"
         active: "{0}no open ticket|{1}1 open ticket|]1,Inf[ %count% open tickets"
         blocked: "{0}no blocked ticket|{1}1 blocked ticket|]1,Inf[ %count% blocked tickets"
-    legend: "A red edge in the gutter marks a project carrying at least one blocked ticket. Archived projects stay in the list, set back."
+    legend: "A red square before the name marks a project carrying at least one blocked ticket. Archived projects stay in the list, set back."
     empty:
         title: "No project tracked."
         body: "Projects appear on their own: the first agent to open a ticket from a repository creates the matching project. Nothing to do here."
@@ -171,6 +171,7 @@ ticket:
         change_status: "Change the status"
         reopen_or_change: "Reopen or change the resolution"
         apply: "Apply"
+        cancel: "Cancel"
     form:
         title:
             label: "Title"
