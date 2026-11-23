@@ -2949,6 +2949,70 @@ fieldset {
     }
 }
 
+/* ======================================== the folded rail, both ways in */
+
+/*
+ * Folded, the rail is a column of icons, and each has to sit in the middle of
+ * its square. Fading the labels to transparent left them holding their width,
+ * so the icon was pushed to the left of the dark block that marks the current
+ * page. Here the labels leave the layout — still named for a screen reader —
+ * and the brand, the links and the session button centre on the rail.
+ *
+ * The folded state is reached two ways, so it is written twice: below 1200px
+ * the rail is folded unless pinned open, above it only when pinned folded.
+ */
+@media (min-width: 43.75rem) and (max-width: 74.99rem) {
+    .app:not(.rail-wide) .rail-brand,
+    .app:not(.rail-wide) .rail-nav a,
+    .app:not(.rail-wide) .rail-foot {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+        gap: 0;
+    }
+
+    .app:not(.rail-wide) .rail-nav a {
+        width: var(--touch-h);
+        margin: 0 auto;
+    }
+
+    .app:not(.rail-wide) .rail .rail-label,
+    .app:not(.rail-wide) .rail-user {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+@media (min-width: 75rem) {
+    .app.rail-narrow .rail-brand,
+    .app.rail-narrow .rail-nav a,
+    .app.rail-narrow .rail-foot {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+        gap: 0;
+    }
+
+    .app.rail-narrow .rail-nav a {
+        width: var(--touch-h);
+        margin: 0 auto;
+    }
+
+    .app.rail-narrow .rail .rail-label,
+    .app.rail-narrow .rail-user {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
 /* ------------------------------------------- motion, when it is wanted */
 
 /*
